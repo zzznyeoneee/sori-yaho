@@ -13,16 +13,30 @@ def separate_drums(audio_path: str, output_dir: str) -> str:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    subprocess.run(
+    result = subprocess.run(
         [
             "python", "-m", "demucs",
             "--two-stems", "drums",
             "-o", str(output_dir),
             str(audio_path),
         ],
-        check=True,
+        capture_output=True,
+        text=True,
     )
 
-    # Demucs outputs to output_dir/htdemucs/<stem>/<filename>.wav
-    drum_wav = output_dir / "htdemucs" / audio_path.stem / "drums.wav"
-    return str(drum_wav)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Demucs 실패 (exit {result.returncode}):\n"
+            f"STDOUT: {result.stdout}\n"
+            f"STDERR: {result.stderr}"
+        )
+
+    # 모델명에 관계없이 drums.wav를 찾아서 반환
+    matches = list(output_dir.rglob("drums.wav"))
+    if not matches:
+        raise RuntimeError(
+            f"drums.wav 를 찾을 수 없습니다. output_dir: {output_dir}\n"
+            f"STDOUT: {result.stdout}"
+        )
+
+    return str(matches[0])
