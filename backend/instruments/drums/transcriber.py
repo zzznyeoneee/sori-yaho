@@ -16,6 +16,35 @@ DRUM_MAP = {
     "tom_lo":   41,
 }
 
+# 주파수 대역 (Hz)
+_KICK_MAX_HZ  = 250
+_SNARE_MAX_HZ = 8000
+
+
+def _classify_onset(y: np.ndarray, sr: int, onset_sample: int, frame_len: int = 1024) -> str:
+    """
+    onset 직후 짧은 구간의 주파수 에너지 분포로 kick/snare/hihat 구분.
+    - kick:  저역(< 250 Hz) 에너지 비율이 높음
+    - hihat: 고역(> 8 kHz) 에너지 비율이 높음
+    - snare: 그 외 (중역 + 노이즈)
+    """
+    frame = y[onset_sample: onset_sample + frame_len]
+    if len(frame) < frame_len:
+        frame = np.pad(frame, (0, frame_len - len(frame)))
+
+    magnitude = np.abs(np.fft.rfft(frame))
+    freqs = np.fft.rfftfreq(frame_len, d=1.0 / sr)
+
+    total = magnitude.sum() + 1e-9
+    kick_ratio  = magnitude[freqs <  _KICK_MAX_HZ].sum()  / total
+    hihat_ratio = magnitude[freqs > _SNARE_MAX_HZ].sum() / total
+
+    if kick_ratio > 0.55:
+        return "kick"
+    if hihat_ratio > 0.40:
+        return "hihat_cl"
+    return "snare"
+
 
 def transcribe_drums(drum_wav_path: str, output_dir: str) -> str:
     """
@@ -28,19 +57,21 @@ def transcribe_drums(drum_wav_path: str, output_dir: str) -> str:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    y, sr = librosa.load(drum_wav_path, sr=44100)
+    y, sr = librosa.load(drum_wav_path, sr=44100, mono=True)
     tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
-    onset_frames = librosa.onset.onset_detect(y=y, sr=sr, units="time")
+    onset_times = librosa.onset.onset_detect(y=y, sr=sr, units="time")
+    onset_samples = librosa.onset.onset_detect(y=y, sr=sr, units="samples")
 
     midi = pretty_midi.PrettyMIDI(initial_tempo=float(tempo))
     drum_inst = pretty_midi.Instrument(program=0, is_drum=True, name="Drums")
 
-    for onset in onset_frames:
+    for onset_time, onset_sample in zip(onset_times, onset_samples):
+        drum_type = _classify_onset(y, sr, int(onset_sample))
         note = pretty_midi.Note(
             velocity=100,
-            pitch=DRUM_MAP["snare"],  # placeholder — classifier will refine
-            start=float(onset),
-            end=float(onset) + 0.1,
+            pitch=DRUM_MAP[drum_type],
+            start=float(onset_time),
+            end=float(onset_time) + 0.05,
         )
         drum_inst.notes.append(note)
 
