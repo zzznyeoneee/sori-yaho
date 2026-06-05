@@ -19,16 +19,16 @@ export default function ResultPanel({ result }: ResultPanelProps) {
     <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-6 flex flex-col gap-6">
       <p className="text-sm font-semibold text-white/50 uppercase tracking-widest">결과</p>
 
-      {/* MIDI 미리듣기 */}
-      <div className="flex flex-col gap-3">
-        <p className="text-xs text-white/40">MIDI 미리듣기</p>
-        <MidiPlayer url={result.midiUrl} />
-      </div>
-
       {/* 악보 미리보기 */}
       <div className="flex flex-col gap-3">
         <p className="text-xs text-white/40">악보 미리보기</p>
         <SheetViewer url={result.musicxmlUrl} />
+      </div>
+
+      {/* MIDI 미리듣기 */}
+      <div className="flex flex-col gap-3">
+        <p className="text-xs text-white/40">MIDI 미리듣기</p>
+        <MidiPlayer url={result.midiUrl} />
       </div>
 
       {/* 다운로드 버튼 */}
