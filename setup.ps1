@@ -242,3 +242,21 @@ Set-Content -Path "document\01_overview.md" -Encoding UTF8 -Value @'
 | 3 | 기타 확장 | 멜로디 TAB 생성 |
 
 ## 데이터 흐름
+1.사용자가 MP3/WAV 업로드
+2.POST /api/upload → 파일 저장, task_id 발급
+3.POST /api/separate → Demucs로 악기 트랙 분리
+4.POST /api/transcribe → 드럼: onset detection → MIDI
+5.POST /api/notate → MIDI → MusicXML 악보 생성
+6.GET /api/result/{id} → 완료 시 결과 표시
+7.GET /api/download/.. → MIDI / MusicXML 다운로드
+
+## 기술 스택
+| 구분 | 기술 |
+|---|---|
+| Frontend | Next.js 14 (TypeScript) + Tailwind CSS |
+| Backend | FastAPI (Python 3.10+) |
+| 트랙 분리 | Demucs |
+| 드럼 감지 | madmom, librosa |
+| MIDI / 악보 | pretty_midi, music21 |
+'@
+Write-Host "완료! 이제 git add, commit, push 하세요." -ForegroundColor Green
