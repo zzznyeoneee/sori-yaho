@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 
 interface MidiPlayerProps {
   url: string
+  onMeasure?: (measure: number) => void
 }
 
-export default function MidiPlayer({ url }: MidiPlayerProps) {
+export default function MidiPlayer({ url, onMeasure }: MidiPlayerProps) {
   const [playing, setPlaying] = useState(false)
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -15,6 +16,7 @@ export default function MidiPlayer({ url }: MidiPlayerProps) {
   const playerRef = useRef<any>(null)
   const instrumentRef = useRef<any>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
+  const lastMeasureRef = useRef(-1)
 
   useEffect(() => {
     return () => {
@@ -29,7 +31,6 @@ export default function MidiPlayer({ url }: MidiPlayerProps) {
     setError(undefined)
 
     try {
-      // CommonJS 모듈이라 require 방식으로 로드
       const MidiPlayer = (await import('midi-player-js' as any)) as any
       const Soundfont = (await import('soundfont-player' as any)) as any
 
@@ -49,6 +50,7 @@ export default function MidiPlayer({ url }: MidiPlayerProps) {
 
       const player = new PlayerClass((event: any) => {
         if (!audioCtxRef.current || !instrumentRef.current) return
+
         if (event.name === 'Note on' && event.velocity > 0) {
           instrumentRef.current.play(
             event.noteName,
@@ -56,6 +58,16 @@ export default function MidiPlayer({ url }: MidiPlayerProps) {
             { gain: event.velocity / 127 }
           )
         }
+
+        // 현재 마디 계산 (4/4 기준)
+        const tick = player.getCurrentTick?.() ?? 0
+        const ppq = player.division ?? 480
+        const measure = Math.floor(tick / (ppq * 4))
+        if (measure !== lastMeasureRef.current) {
+          lastMeasureRef.current = measure
+          onMeasure?.(measure)
+        }
+
         const pct = player.getSongPercentRemaining?.()
         if (pct != null) setProgress(100 - pct)
       })
@@ -63,6 +75,8 @@ export default function MidiPlayer({ url }: MidiPlayerProps) {
       player.on('endOfFile', () => {
         setPlaying(false)
         setProgress(0)
+        lastMeasureRef.current = -1
+        onMeasure?.(0)
       })
 
       const res = await fetch(url)
@@ -111,9 +125,7 @@ export default function MidiPlayer({ url }: MidiPlayerProps) {
           />
         </div>
       </div>
-      {error && (
-        <p className="text-xs text-red-400 px-1">재생 오류: {error}</p>
-      )}
+      {error && <p className="text-xs text-red-400 px-1">재생 오류: {error}</p>}
     </div>
   )
 }
