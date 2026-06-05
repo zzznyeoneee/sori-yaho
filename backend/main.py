@@ -8,10 +8,13 @@ from core.config import settings
 from api.routers import transcribe
 
 
+# StaticFiles보다 먼저 디렉토리 생성
+Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+Path(settings.OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
-    Path(settings.OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
     yield
 
 
