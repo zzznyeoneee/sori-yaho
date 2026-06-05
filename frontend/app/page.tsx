@@ -60,7 +60,7 @@ export default function Home() {
         onHome={() => { setStep('idle'); setResult(null) }}
       />
 
-      <main className="flex-1 flex gap-6 p-8 min-w-0">
+      <main className="flex-1 flex flex-nowrap gap-6 p-8 min-w-0 overflow-auto">
         {/* 왼쪽: 업로드 + 진행 상태 */}
         <div className="flex flex-col gap-6 w-96 shrink-0">
           <div>

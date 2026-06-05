@@ -33,9 +33,9 @@ export default function ProgressCard({ step, errorMessage }: ProgressCardProps) 
 
       <ol className="flex flex-col gap-3">
         {STEPS.map((s, i) => {
-          const done = step !== 'error' && currentIndex > i
-          const active = step !== 'error' && currentIndex === i
-          const pending = step !== 'error' && currentIndex < i
+          const done = (step === 'done' || (step !== 'error' && currentIndex > i))
+          const active = step !== 'error' && step !== 'done' && currentIndex === i
+          const pending = step !== 'error' && step !== 'done' && currentIndex < i
 
           return (
             <li key={s.id} className="flex items-center gap-3">
