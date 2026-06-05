@@ -38,6 +38,7 @@ export default function SheetViewer({ url }: SheetViewerProps) {
         if (cancelled) return
         osmd.render()
       } catch (e) {
+        console.error('SheetViewer error:', e)
         if (!cancelled) setError(e instanceof Error ? e.message : String(e))
       } finally {
         if (!cancelled) setLoading(false)
