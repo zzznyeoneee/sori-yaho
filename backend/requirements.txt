@@ -13,5 +13,5 @@ pretty_midi>=0.2.10
 # 악보 생성
 music21>=9.1.0
 
-# 피아노 채보 (Python 3.10 / 3.11 전용 — 3.12에서는 TensorFlow 미지원)
-# pip install basic-pitch  ← Python 3.11 환경에서만 별도 설치
+# 피아노 채보
+piano_transcription_inference

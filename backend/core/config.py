@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 50
 
     # 피아노 채보 모델: "piano_transcription" | "basic_pitch"
-    TRANSCRIPTION_MODEL: str = "basic_pitch"
+    TRANSCRIPTION_MODEL: str = "piano_transcription"
 
     # MuseScore 폴리싱
     MUSESCORE_PATH: str = ""
