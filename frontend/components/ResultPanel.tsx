@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import SheetViewer from './SheetViewer'
 
 export interface TranscribeResult {
   midiUrl: string
@@ -54,12 +55,10 @@ export default function ResultPanel({ result }: ResultPanelProps) {
         </div>
       </div>
 
-      {/* 악보 미리보기 placeholder */}
+      {/* 악보 미리보기 */}
       <div className="flex flex-col gap-3">
         <p className="text-xs text-white/40">악보 미리보기</p>
-        <div className="rounded-xl border border-white/5 bg-white/[0.02] h-40 flex items-center justify-center text-white/20 text-sm">
-          MusicXML 렌더러 준비 중
-        </div>
+        <SheetViewer url={result.musicxmlUrl} />
       </div>
 
       {/* 다운로드 버튼 */}
