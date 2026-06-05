@@ -1,32 +1,23 @@
-<<<<<<< HEAD
-﻿from fastapi import FastAPI
-=======
 from fastapi import FastAPI
->>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from core.config import settings
+from api.routers import transcribe
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-<<<<<<< HEAD
+    Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+    Path(settings.OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
     yield
-=======
-    # startup
-    yield
-    # shutdown
->>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
 
 
 app = FastAPI(
     title="Sori-Yaho API",
-<<<<<<< HEAD
-    description="Audio to sheet music transcription ??Drums & Guitar",
-=======
-    description="Audio to sheet music transcription — Drums & Guitar",
->>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
+    description="Audio to sheet music transcription — Drums, Piano & Guitar",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -38,6 +29,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(transcribe.router, prefix="/api")
+
+app.mount("/files", StaticFiles(directory=settings.OUTPUT_DIR), name="files")
 
 
 @app.get("/health")
