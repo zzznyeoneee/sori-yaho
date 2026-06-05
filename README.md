@@ -37,12 +37,24 @@ git checkout claude/laughing-cray-MOupG
 ```bash
 cd backend
 pip install -r requirements.txt
+pip install piano_transcription_inference
 python -m uvicorn main:app --reload
 ```
 
 백엔드가 `http://localhost:8000` 에서 실행됩니다.
 
-> 첫 실행 시 Demucs, Basic Pitch 모델 다운로드로 시간이 걸릴 수 있습니다.
+> 첫 실행 시 Demucs, piano_transcription 모델 다운로드로 시간이 걸릴 수 있습니다.
+
+#### 설치 패키지 목록
+
+| 패키지 | 용도 |
+|--------|------|
+| `fastapi`, `uvicorn`, `python-multipart` | 웹 서버 |
+| `pydantic-settings` | 환경 변수 관리 |
+| `demucs`, `torchcodec` | 트랙 분리 |
+| `librosa`, `pretty_midi` | 드럼 채보 |
+| `music21` | 악보(MusicXML) 생성 |
+| `piano_transcription_inference` | 피아노 채보 (requirements.txt 미포함, 별도 설치) |
 
 **API 확인:**
 - Swagger UI: `http://localhost:8000/docs`
