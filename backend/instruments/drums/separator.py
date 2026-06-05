@@ -13,10 +13,14 @@ def separate_drums(audio_path: str, output_dir: str) -> str:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    import torch
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     result = subprocess.run(
         [
             "python", "-m", "demucs",
             "--two-stems", "drums",
+            "-d", device,
             "-o", str(output_dir),
             str(audio_path),
         ],
