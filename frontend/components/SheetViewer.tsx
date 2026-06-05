@@ -32,7 +32,9 @@ export default function SheetViewer({ url }: SheetViewerProps) {
           drawCredits: false,
         })
 
-        await osmd.load(url)
+        const res = await fetch(url)
+        const xml = await res.text()
+        await osmd.load(xml)
         if (cancelled) return
         osmd.render()
       } catch (e) {
@@ -47,7 +49,7 @@ export default function SheetViewer({ url }: SheetViewerProps) {
   }, [url])
 
   return (
-    <div className="rounded-xl border border-white/5 bg-white overflow-x-auto min-h-40">
+    <div className="rounded-xl border border-white/5 bg-white overflow-auto max-h-[60vh] min-h-40">
       {loading && !error && (
         <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
           악보 렌더링 중…
