@@ -56,17 +56,25 @@ export default function Home() {
     <div className="flex min-h-screen bg-[#0f0f13] text-white">
       <Sidebar selected={instrument} onChange={(id) => { setInstrument(id); setStep('idle'); setResult(null) }} />
 
-      <main className="flex-1 flex flex-col gap-6 p-8 max-w-2xl">
-        <div>
-          <h2 className="text-2xl font-bold">음원 채보</h2>
-          <p className="text-white/40 text-sm mt-1">MP3 또는 WAV를 업로드하면 MIDI와 악보로 변환합니다.</p>
+      <main className="flex-1 flex gap-6 p-8 min-w-0">
+        {/* 왼쪽: 업로드 + 진행 상태 */}
+        <div className="flex flex-col gap-6 w-96 shrink-0">
+          <div>
+            <h2 className="text-2xl font-bold">음원 채보</h2>
+            <p className="text-white/40 text-sm mt-1">MP3 또는 WAV를 업로드하면 MIDI와 악보로 변환합니다.</p>
+          </div>
+
+          <UploadZone onFile={handleFile} disabled={busy} />
+
+          {step !== 'idle' && <ProgressCard step={step} errorMessage={errorMessage} />}
         </div>
 
-        <UploadZone onFile={handleFile} disabled={busy} />
-
-        {step !== 'idle' && <ProgressCard step={step} errorMessage={errorMessage} />}
-
-        {result && step === 'done' && <ResultPanel result={result} />}
+        {/* 오른쪽: 결과 */}
+        {result && step === 'done' && (
+          <div className="flex-1 min-w-0">
+            <ResultPanel result={result} />
+          </div>
+        )}
       </main>
     </div>
   )
