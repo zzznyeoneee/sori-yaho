@@ -12,9 +12,12 @@ export default function Home() {
 
       <div className="flex gap-4 mt-8">
         <button className="px-6 py-2 rounded-full bg-gray-800 text-gray-300 text-sm font-medium hover:bg-gray-700 transition-colors">
+<<<<<<< HEAD
           🎹 피아노
         </button>
         <button className="px-6 py-2 rounded-full bg-gray-800 text-gray-300 text-sm font-medium hover:bg-gray-700 transition-colors">
+=======
+>>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
           🥁 드럼
         </button>
         <button className="px-6 py-2 rounded-full bg-gray-800 text-gray-300 text-sm font-medium hover:bg-gray-700 transition-colors opacity-50 cursor-not-allowed">
@@ -23,4 +26,8 @@ export default function Home() {
       </div>
     </main>
   )
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869

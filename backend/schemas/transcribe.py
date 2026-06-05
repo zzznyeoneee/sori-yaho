@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿from pydantic import BaseModel
+=======
+from pydantic import BaseModel
+>>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
 from typing import Literal
 
 

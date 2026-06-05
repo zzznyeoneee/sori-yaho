@@ -1,7 +1,16 @@
+<<<<<<< HEAD
 ﻿"""Drum onset detection and MIDI generation."""
 import pretty_midi
 from pathlib import Path
 
+=======
+"""Drum onset detection and MIDI generation."""
+import pretty_midi
+import numpy as np
+from pathlib import Path
+
+# General MIDI drum map (channel 10)
+>>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
 DRUM_MAP = {
     "kick":     36,
     "snare":    38,
@@ -16,13 +25,25 @@ DRUM_MAP = {
 
 
 def transcribe_drums(drum_wav_path: str, output_dir: str) -> str:
+<<<<<<< HEAD
+=======
+    """
+    drum_wav_path:  분리된 드럼 트랙 .wav 경로
+    output_dir:     결과 저장 폴더
+    반환값:         생성된 .mid 파일 절대 경로
+    """
+>>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
     import librosa
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     y, sr = librosa.load(drum_wav_path, sr=44100)
+<<<<<<< HEAD
     tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+=======
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+>>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
     onset_frames = librosa.onset.onset_detect(y=y, sr=sr, units="time")
 
     midi = pretty_midi.PrettyMIDI(initial_tempo=float(tempo))
@@ -31,7 +52,11 @@ def transcribe_drums(drum_wav_path: str, output_dir: str) -> str:
     for onset in onset_frames:
         note = pretty_midi.Note(
             velocity=100,
+<<<<<<< HEAD
             pitch=DRUM_MAP["snare"],
+=======
+            pitch=DRUM_MAP["snare"],  # placeholder — classifier will refine
+>>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
             start=float(onset),
             end=float(onset) + 0.1,
         )
@@ -39,6 +64,11 @@ def transcribe_drums(drum_wav_path: str, output_dir: str) -> str:
 
     midi.instruments.append(drum_inst)
 
+<<<<<<< HEAD
     out_path = output_dir / f"{Path(drum_wav_path).stem}_drums.mid"
+=======
+    stem = Path(drum_wav_path).stem
+    out_path = output_dir / f"{stem}_drums.mid"
+>>>>>>> 7c418751c71fd61627f81bd3fe4fb9a2a46d8869
     midi.write(str(out_path))
     return str(out_path)
