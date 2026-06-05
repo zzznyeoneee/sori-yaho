@@ -54,7 +54,11 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen bg-[#0f0f13] text-white">
-      <Sidebar selected={instrument} onChange={(id) => { setInstrument(id); setStep('idle'); setResult(null) }} />
+      <Sidebar
+        selected={instrument}
+        onChange={(id) => { setInstrument(id); setStep('idle'); setResult(null) }}
+        onHome={() => { setStep('idle'); setResult(null) }}
+      />
 
       <main className="flex-1 flex gap-6 p-8 min-w-0">
         {/* 왼쪽: 업로드 + 진행 상태 */}

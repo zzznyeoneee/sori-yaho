@@ -16,15 +16,16 @@ const instruments: Instrument[] = [
 interface SidebarProps {
   selected: string
   onChange: (id: string) => void
+  onHome?: () => void
 }
 
-export default function Sidebar({ selected, onChange }: SidebarProps) {
+export default function Sidebar({ selected, onChange, onHome }: SidebarProps) {
   return (
     <aside className="w-60 shrink-0 bg-[#16161d] border-r border-white/5 flex flex-col py-6 px-4 gap-2">
-      <div className="px-2 mb-4">
+      <button onClick={onHome} className="px-2 mb-4 text-left hover:opacity-70 transition-opacity">
         <h1 className="text-xl font-bold text-white tracking-tight">Sori-Yaho</h1>
         <p className="text-xs text-white/40 mt-1">음원 → 악보 자동 변환</p>
-      </div>
+      </button>
 
       <p className="px-2 text-xs font-semibold text-white/30 uppercase tracking-widest mb-1">악기 선택</p>
 
