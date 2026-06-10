@@ -4,7 +4,7 @@ from fractions import Fraction
 from pathlib import Path
 from music21 import (
     stream, note, chord, meter, tempo as m21tempo,
-    clef, instrument as m21instrument, pitch as m21pitch,
+    clef, instrument as m21instrument, pitch as m21pitch, layout,
 )
 from music21.note import NotRest
 
@@ -59,6 +59,9 @@ def midi_to_drum_score(midi_path: str, output_dir: str) -> str:
 
     score = stream.Score()
     part = stream.Part()
+    sl = layout.StaffLayout()
+    sl.staffLines = 5
+    part.insert(0, sl)
     part.insert(0, m21instrument.Percussion())
     part.insert(0, clef.PercussionClef())
     part.insert(0, meter.TimeSignature("4/4"))
