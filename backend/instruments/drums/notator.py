@@ -157,19 +157,25 @@ def midi_to_drum_score(midi_path: str, output_dir: str) -> str:
     out_path = output_dir / f"{Path(midi_path).stem}.xml"
     score.write("musicxml", fp=str(out_path))
 
-    # music21이 단선보로 출력하는 경우 XML 직접 패치
+    # OSMD는 percussion clef를 단선보로 강제 렌더링하므로
+    # treble clef로 교체하고 5선보 명시
     import re
     xml_text = out_path.read_text(encoding="utf-8")
-    # 이미 staff-details 있으면 staff-lines 값만 교체
+    # staff-lines 5로 설정
     if "<staff-details>" in xml_text:
         xml_text = re.sub(r"<staff-lines>\d+</staff-lines>", "<staff-lines>5</staff-lines>", xml_text)
     else:
-        # <clef> 바로 앞에 staff-details 삽입
         xml_text = xml_text.replace(
             "<clef>",
             "<staff-details><staff-lines>5</staff-lines></staff-details><clef>",
             1,
         )
+    # percussion clef → treble clef
+    xml_text = re.sub(
+        r"<clef>\s*<sign>percussion</sign>\s*</clef>",
+        "<clef><sign>G</sign><line>2</line></clef>",
+        xml_text,
+    )
     out_path.write_text(xml_text, encoding="utf-8")
 
     return str(out_path)
