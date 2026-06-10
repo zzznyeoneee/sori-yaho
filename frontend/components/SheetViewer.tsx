@@ -95,9 +95,9 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
     }, [url])
 
     return (
-      <div className="rounded-xl border border-white/5 bg-white overflow-auto max-h-[60vh] min-h-40">
+      <div className="rounded-xl border border-white/5 bg-white overflow-auto max-h-[60vh] min-h-40 relative">
         {loading && !error && (
-          <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm z-10 bg-white">
             악보 렌더링 중…
           </div>
         )}
@@ -106,7 +106,7 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
             악보 렌더링 실패: {error}
           </div>
         )}
-        <div ref={containerRef} className={loading || error ? 'hidden' : ''} />
+        <div ref={containerRef} className={error ? 'hidden' : ''} />
       </div>
     )
   }
