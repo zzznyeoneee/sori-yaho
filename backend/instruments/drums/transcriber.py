@@ -75,8 +75,9 @@ def transcribe_drums(drum_wav_path: str, output_dir: str) -> str:
         )
         drum_inst.notes.append(note)
 
-    midi.instruments.append(drum_inst)
-
+    bpm = float(np.atleast_1d(tempo)[0])
+    midi = pretty_midi.PrettyMIDI(initial_tempo=bpm)
+    
     stem = Path(drum_wav_path).stem
     out_path = output_dir / f"{stem}_drums.mid"
     midi.write(str(out_path))

@@ -1,10 +1,14 @@
 """POST /api/transcribe — 음원 파일을 받아 악기별 파이프라인 실행"""
 import uuid
 import shutil
+import traceback
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException
 from typing import Literal
+
+logger = logging.getLogger(__name__)
 
 from core.config import settings
 from schemas.transcribe import TranscribeResponse
@@ -47,8 +51,9 @@ async def transcribe(
         else:
             raise HTTPException(status_code=400, detail=f"지원하지 않는 악기입니다: {instrument}")
     except Exception as e:
+        logger.error("transcribe error:\n%s", traceback.format_exc())
         shutil.rmtree(upload_dir, ignore_errors=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
 
     midi_rel = Path(midi_path).relative_to(settings.OUTPUT_DIR)
     xml_rel = Path(xml_path).relative_to(settings.OUTPUT_DIR)
