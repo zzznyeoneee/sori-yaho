@@ -62,7 +62,7 @@ def transcribe_drums(drum_wav_path: str, output_dir: str) -> str:
     onset_times = librosa.onset.onset_detect(y=y, sr=sr, units="time")
     onset_samples = librosa.onset.onset_detect(y=y, sr=sr, units="samples")
 
-    bpm = float(np.atleast_1d(tempo)[0])
+    bpm = float(round(np.atleast_1d(tempo)[0]))
     midi = pretty_midi.PrettyMIDI(initial_tempo=bpm)
     drum_inst = pretty_midi.Instrument(program=0, is_drum=True, name="Drums")
 
