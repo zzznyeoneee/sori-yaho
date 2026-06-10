@@ -10,6 +10,7 @@ torchcodec
 # 드럼 채보
 librosa>=0.10.0
 pretty_midi>=0.2.10
+omnizart
 
 # 악보 생성
 music21>=9.1.0
