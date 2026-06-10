@@ -158,16 +158,18 @@ def midi_to_drum_score(midi_path: str, output_dir: str) -> str:
     score.write("musicxml", fp=str(out_path))
 
     # music21이 단선보로 출력하는 경우 XML 직접 패치
+    import re
     xml_text = out_path.read_text(encoding="utf-8")
-    if "<staff-lines>" not in xml_text:
+    # 이미 staff-details 있으면 staff-lines 값만 교체
+    if "<staff-details>" in xml_text:
+        xml_text = re.sub(r"<staff-lines>\d+</staff-lines>", "<staff-lines>5</staff-lines>", xml_text)
+    else:
+        # <clef> 바로 앞에 staff-details 삽입
         xml_text = xml_text.replace(
             "<clef>",
-            "<staff-lines>5</staff-lines><clef>",
+            "<staff-details><staff-lines>5</staff-lines></staff-details><clef>",
             1,
         )
-    else:
-        import re
-        xml_text = re.sub(r"<staff-lines>\d+</staff-lines>", "<staff-lines>5</staff-lines>", xml_text)
     out_path.write_text(xml_text, encoding="utf-8")
 
     return str(out_path)
