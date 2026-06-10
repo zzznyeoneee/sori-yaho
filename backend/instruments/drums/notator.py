@@ -10,21 +10,23 @@ from music21.note import NotRest
 
 
 # GM drum pitch → (staff step, octave, notehead type, stem direction)
-# step/octave follow percussion clef conventions (middle line = B4)
+# treble clef 기준 위치:
+#   lines(아래→위): E4 G4 B4 D5 F5
+#   spaces: F4 A4 C5 E5
 _DRUM_NOTATION = {
-    36: ("C",  5, "normal",  "down"),   # kick
-    38: ("C",  5, "normal",  "up"),     # snare
-    40: ("C",  5, "normal",  "up"),     # snare rim
-    42: ("G",  5, "x",       "up"),     # hihat closed
-    44: ("A",  5, "x",       "up"),     # hihat pedal
-    46: ("A",  5, "x",       "up"),     # hihat open
-    49: ("A",  5, "x",       "up"),     # crash
+    36: ("C",  4, "normal",  "down"),   # kick  — 아래 ledger line
+    38: ("B",  4, "normal",  "up"),     # snare — 3번째 선(중앙)
+    40: ("C",  5, "normal",  "up"),     # snare rim — 3번째 칸
+    42: ("E",  5, "x",       "up"),     # hihat closed — 5번째 칸(위)
+    44: ("D",  5, "x",       "up"),     # hihat pedal
+    46: ("F",  5, "x",       "up"),     # hihat open — 5번째 선 위
+    49: ("A",  5, "x",       "up"),     # crash — 맨 위
     51: ("F",  5, "x",       "up"),     # ride
-    48: ("C",  5, "normal",  "up"),     # hi tom
-    45: ("A",  4, "normal",  "up"),     # mid tom
-    41: ("F",  4, "normal",  "up"),     # lo tom
+    48: ("D",  5, "normal",  "up"),     # hi tom — 4번째 선
+    45: ("A",  4, "normal",  "up"),     # mid tom — 2번째 칸
+    41: ("G",  4, "normal",  "up"),     # lo tom — 2번째 선
 }
-_DEFAULT_NOTATION = ("E", 5, "normal", "up")
+_DEFAULT_NOTATION = ("B", 4, "normal", "up")
 
 
 def _make_note(pitch_num: int, duration_ql: float) -> note.Note:

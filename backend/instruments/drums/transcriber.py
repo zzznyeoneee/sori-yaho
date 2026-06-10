@@ -21,12 +21,12 @@ _KICK_MAX_HZ  = 250
 _SNARE_MAX_HZ = 8000
 
 
-def _classify_onset(y: np.ndarray, sr: int, onset_sample: int, frame_len: int = 1024) -> str:
+def _classify_onset(y: np.ndarray, sr: int, onset_sample: int, frame_len: int = 2048) -> str:
     """
     onset 직후 짧은 구간의 주파수 에너지 분포로 kick/snare/hihat 구분.
     - kick:  저역(< 250 Hz) 에너지 비율이 높음
-    - hihat: 고역(> 8 kHz) 에너지 비율이 높음
-    - snare: 그 외 (중역 + 노이즈)
+    - hihat: 고역(> 6 kHz) 에너지 비율이 높음
+    - snare: 그 외
     """
     frame = y[onset_sample: onset_sample + frame_len]
     if len(frame) < frame_len:
@@ -36,12 +36,13 @@ def _classify_onset(y: np.ndarray, sr: int, onset_sample: int, frame_len: int = 
     freqs = np.fft.rfftfreq(frame_len, d=1.0 / sr)
 
     total = magnitude.sum() + 1e-9
-    kick_ratio  = magnitude[freqs <  _KICK_MAX_HZ].sum()  / total
-    hihat_ratio = magnitude[freqs > _SNARE_MAX_HZ].sum() / total
+    kick_ratio  = magnitude[freqs <  250].sum()  / total
+    mid_ratio   = magnitude[(freqs >= 250) & (freqs < 4000)].sum() / total
+    hihat_ratio = magnitude[freqs > 6000].sum() / total
 
-    if kick_ratio > 0.55:
+    if kick_ratio > 0.45:
         return "kick"
-    if hihat_ratio > 0.40:
+    if hihat_ratio > 0.35 and hihat_ratio > kick_ratio:
         return "hihat_cl"
     return "snare"
 
