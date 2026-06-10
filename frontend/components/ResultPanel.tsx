@@ -35,7 +35,7 @@ export default function ResultPanel({ result }: ResultPanelProps) {
       {/* MIDI 미리듣기 */}
       <div className="flex flex-col gap-3">
         <p className="text-xs text-white/40">MIDI 미리듣기</p>
-        <MidiPlayer url={result.midiUrl} onMeasure={setCurrentMeasure} />
+        <MidiPlayer url={result.midiUrl} instrument={result.instrument} onMeasure={setCurrentMeasure} />
       </div>
 
       {/* 다운로드 버튼 */}
