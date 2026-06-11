@@ -4,22 +4,22 @@ import { useEffect, useRef, useState } from 'react'
 
 // GM drum note → soundfont instrument name
 const DRUM_INSTRUMENT_MAP: Record<number, string> = {
-  36: 'taiko_drum',   // kick
+  36: 'taiko_drum',
   37: 'taiko_drum',
-  38: 'synth_drum',   // snare
+  38: 'synth_drum',
   39: 'synth_drum',
   40: 'synth_drum',
-  41: 'woodblock',    // lo tom
-  42: 'woodblock',    // hihat closed
+  41: 'woodblock',
+  42: 'woodblock',
   43: 'woodblock',
-  44: 'woodblock',    // hihat pedal
-  45: 'woodblock',    // mid tom
-  46: 'woodblock',    // hihat open
+  44: 'woodblock',
+  45: 'woodblock',
+  46: 'woodblock',
   47: 'woodblock',
-  48: 'woodblock',    // hi tom
-  49: 'taiko_drum',   // crash
+  48: 'woodblock',
+  49: 'taiko_drum',
   50: 'woodblock',
-  51: 'woodblock',    // ride
+  51: 'woodblock',
 }
 
 interface MidiPlayerProps {
@@ -32,6 +32,8 @@ export default function MidiPlayer({ url, instrument, onMeasure }: MidiPlayerPro
   const [playing, setPlaying] = useState(false)
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [currentMeasure, setCurrentMeasure] = useState(0)
+  const [totalMeasures, setTotalMeasures] = useState(0)
   const [error, setError] = useState<string>()
 
   const playerRef = useRef<any>(null)
@@ -68,17 +70,17 @@ export default function MidiPlayer({ url, instrument, onMeasure }: MidiPlayerPro
       const ctx = audioCtxRef.current
 
       if (isDrums) {
-        // 드럼용: kick/snare/hihat 사운드폰트 별도 로드
         const needed = [...new Set(Object.values(DRUM_INSTRUMENT_MAP))]
         const loaded = await Promise.all(
-          needed.map(name => soundfont.instrument(ctx, name, { soundfont: 'FluidR3_GM' }).then((inst: any) => [name, inst] as const))
+          needed.map(name =>
+            soundfont.instrument(ctx, name, { soundfont: 'FluidR3_GM' })
+              .then((inst: any) => [name, inst] as const)
+          )
         )
         drumInstrumentsRef.current = Object.fromEntries(loaded)
       } else {
         instrumentRef.current = await soundfont.instrument(
-          ctx,
-          'acoustic_grand_piano',
-          { soundfont: 'FluidR3_GM' }
+          ctx, 'acoustic_grand_piano', { soundfont: 'FluidR3_GM' }
         )
       }
 
@@ -91,35 +93,34 @@ export default function MidiPlayer({ url, instrument, onMeasure }: MidiPlayerPro
             const midiNote: number = event.noteNumber ?? 60
             const instName = DRUM_INSTRUMENT_MAP[midiNote] ?? 'synth_drum'
             drumInstrumentsRef.current[instName]?.play(
-              event.noteName,
-              audioCtxRef.current.currentTime,
-              { gain }
+              event.noteName, audioCtxRef.current.currentTime, { gain }
             )
           } else {
             instrumentRef.current?.play(
-              event.noteName,
-              audioCtxRef.current.currentTime,
-              { gain }
+              event.noteName, audioCtxRef.current.currentTime, { gain }
             )
           }
         }
 
-        // 현재 마디 계산 (4/4 기준)
+        // 진행도
+        const pct = player.getSongPercentRemaining?.()
+        if (pct != null) setProgress(100 - pct)
+
+        // 현재 마디
         const tick = player.getCurrentTick?.() ?? 0
         const ppq = player.division ?? 480
         const measure = Math.floor(tick / (ppq * 4))
         if (measure !== lastMeasureRef.current) {
           lastMeasureRef.current = measure
+          setCurrentMeasure(measure + 1)
           onMeasure?.(measure)
         }
-
-        const pct = player.getSongPercentRemaining?.()
-        if (pct != null) setProgress(100 - pct)
       })
 
       player.on('endOfFile', () => {
         setPlaying(false)
         setProgress(0)
+        setCurrentMeasure(0)
         lastMeasureRef.current = -1
         onMeasure?.(0)
       })
@@ -127,6 +128,11 @@ export default function MidiPlayer({ url, instrument, onMeasure }: MidiPlayerPro
       const res = await fetch(url)
       const buf = await res.arrayBuffer()
       player.loadArrayBuffer(buf)
+
+      // 총 마디 수 계산
+      const totalTicks = player.getTotalTicks?.() ?? 0
+      const ppq = player.division ?? 480
+      setTotalMeasures(Math.max(1, Math.ceil(totalTicks / (ppq * 4))))
 
       playerRef.current = player
       return true
@@ -153,9 +159,26 @@ export default function MidiPlayer({ url, instrument, onMeasure }: MidiPlayerPro
     }
   }
 
+  function handleSeek(e: React.ChangeEvent<HTMLInputElement>) {
+    const pct = Number(e.target.value)
+    setProgress(pct)
+    const player = playerRef.current
+    if (!player) return
+
+    const total = player.getTotalTicks?.() ?? 0
+    const tick = Math.floor((pct / 100) * total)
+    player.skipToTick?.(tick)
+
+    const ppq = player.division ?? 480
+    const measure = Math.floor(tick / (ppq * 4))
+    lastMeasureRef.current = measure
+    setCurrentMeasure(measure + 1)
+    onMeasure?.(measure)
+  }
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4 bg-white/[0.03] rounded-xl px-4 py-3 border border-white/5">
+      <div className="flex items-center gap-3 bg-white/[0.03] rounded-xl px-4 py-3 border border-white/5">
         <button
           onClick={togglePlay}
           disabled={loading}
@@ -163,12 +186,34 @@ export default function MidiPlayer({ url, instrument, onMeasure }: MidiPlayerPro
         >
           {loading ? '…' : playing ? '⏸' : '▶'}
         </button>
-        <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-purple-600 transition-all duration-100"
-            style={{ width: `${progress}%` }}
+
+        {/* seekbar */}
+        <div className="flex-1 relative flex items-center">
+          <div className="absolute inset-y-0 left-0 right-0 flex items-center pointer-events-none">
+            <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-purple-600"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={0.1}
+            value={progress}
+            onChange={handleSeek}
+            className="relative w-full h-1 appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow"
           />
         </div>
+
+        {/* 마디 표시 */}
+        <span className="text-xs text-white/50 shrink-0 w-16 text-right tabular-nums">
+          {currentMeasure > 0
+            ? `${currentMeasure} / ${totalMeasures || '?'} 마디`
+            : totalMeasures > 0 ? `${totalMeasures} 마디` : ''}
+        </span>
       </div>
       {error && <p className="text-xs text-red-400 px-1">재생 오류: {error}</p>}
     </div>
