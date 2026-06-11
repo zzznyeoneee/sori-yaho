@@ -11,6 +11,7 @@ torchcodec
 librosa>=0.10.0
 pretty_midi>=0.2.10
 scipy>=1.10.0
+omnizart  # Linux/WSL 환경에서만 설치
 
 # 악보 생성
 music21>=9.1.0
