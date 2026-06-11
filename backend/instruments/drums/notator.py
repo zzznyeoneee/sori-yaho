@@ -14,17 +14,25 @@ from music21.note import NotRest
 #   lines(아래→위): E4 G4 B4 D5 F5
 #   spaces: F4 A4 C5 E5
 _DRUM_NOTATION = {
-    36: ("C",  4, "normal",  "down"),   # kick  — 아래 ledger line
-    38: ("B",  4, "normal",  "up"),     # snare — 3번째 선(중앙)
-    40: ("C",  5, "normal",  "up"),     # snare rim — 3번째 칸
-    42: ("E",  5, "x",       "up"),     # hihat closed — 5번째 칸(위)
-    44: ("D",  5, "x",       "up"),     # hihat pedal
-    46: ("F",  5, "x",       "up"),     # hihat open — 5번째 선 위
-    49: ("A",  5, "x",       "up"),     # crash — 맨 위
-    51: ("F",  5, "x",       "up"),     # ride
-    48: ("D",  5, "normal",  "up"),     # hi tom — 4번째 선
-    45: ("A",  4, "normal",  "up"),     # mid tom — 2번째 칸
-    41: ("G",  4, "normal",  "up"),     # lo tom — 2번째 선
+    35: ("C",  4, "normal",  "down"),   # acoustic bass drum (kick)
+    36: ("C",  4, "normal",  "down"),   # bass drum 1 (kick)
+    38: ("B",  4, "normal",  "up"),     # snare
+    40: ("B",  4, "normal",  "up"),     # electric snare
+    37: ("C",  5, "x",       "up"),     # side stick
+    42: ("E",  5, "x",       "up"),     # hihat closed
+    44: ("E",  5, "x",       "up"),     # hihat pedal
+    46: ("F",  5, "x",       "up"),     # hihat open
+    49: ("A",  5, "x",       "up"),     # crash 1
+    57: ("A",  5, "x",       "up"),     # crash 2
+    51: ("G",  5, "x",       "up"),     # ride 1
+    59: ("G",  5, "x",       "up"),     # ride 2
+    53: ("G",  5, "x",       "up"),     # ride bell
+    48: ("D",  5, "normal",  "up"),     # hi tom
+    50: ("D",  5, "normal",  "up"),     # hi-mid tom
+    45: ("A",  4, "normal",  "up"),     # mid tom
+    47: ("A",  4, "normal",  "up"),     # low-mid tom
+    41: ("G",  4, "normal",  "up"),     # low tom
+    43: ("G",  4, "normal",  "up"),     # high floor tom
 }
 _DEFAULT_NOTATION = ("B", 4, "normal", "up")
 
@@ -70,12 +78,18 @@ def midi_to_drum_score(midi_path: str, output_dir: str) -> str:
     part.insert(0, m21tempo.MetronomeMark(number=int(bpm)))
 
     # 드럼 채널 노트 수집
+    import logging
+    logger = logging.getLogger(__name__)
     all_notes = []
     for inst in pm.instruments:
         if inst.is_drum:
             for n in inst.notes:
                 all_notes.append(n)
     all_notes.sort(key=lambda n: n.start)
+    pitch_counts = {}
+    for n in all_notes:
+        pitch_counts[n.pitch] = pitch_counts.get(n.pitch, 0) + 1
+    logger.info("drum pitches: %s", sorted(pitch_counts.items()))
 
     if not all_notes:
         score.append(part)
