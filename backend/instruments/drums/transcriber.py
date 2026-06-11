@@ -15,7 +15,7 @@ def transcribe_drums(drum_wav_path: str, output_dir: str) -> str:
             stem = Path(drum_wav_path).stem
             midi_path = str(Path(output_dir) / f"{stem}.mid")
         return str(midi_path)
-    except ImportError:
+    except Exception:
         return _spectral_transcribe(drum_wav_path, output_dir)
 
 
