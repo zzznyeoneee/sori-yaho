@@ -2,6 +2,20 @@
 
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react'
 
+function loadOSMD(): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if ((window as any).opensheetmusicdisplay) {
+      resolve((window as any).opensheetmusicdisplay.OpenSheetMusicDisplay)
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.0/build/opensheetmusicdisplay.min.js'
+    script.onload = () => resolve((window as any).opensheetmusicdisplay.OpenSheetMusicDisplay)
+    script.onerror = reject
+    document.head.appendChild(script)
+  })
+}
+
 interface SheetViewerProps {
   url: string
   currentMeasure?: number
@@ -59,7 +73,7 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
         setError(undefined)
 
         try {
-          const { OpenSheetMusicDisplay } = await import('opensheetmusicdisplay')
+          const OpenSheetMusicDisplay = await loadOSMD()
           if (cancelled || !containerRef.current) return
 
           const osmd = new OpenSheetMusicDisplay(containerRef.current, {
