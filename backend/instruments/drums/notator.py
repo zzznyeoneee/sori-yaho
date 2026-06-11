@@ -14,25 +14,25 @@ from music21.note import NotRest
 #   lines(아래→위): E4 G4 B4 D5 F5
 #   spaces: F4 A4 C5 E5
 _DRUM_NOTATION = {
-    35: ("F",  4, "normal",  "down"),   # acoustic bass drum (kick)
-    36: ("F",  4, "normal",  "down"),   # bass drum 1 (kick)
-    38: ("B",  4, "normal",  "up"),     # snare
-    40: ("B",  4, "normal",  "up"),     # electric snare
+    35: ("F",  4, "normal",  "down"),   # kick
+    36: ("F",  4, "normal",  "down"),   # kick
+    38: ("C",  5, "normal",  "up"),     # snare
+    40: ("C",  5, "normal",  "up"),     # electric snare
     37: ("C",  5, "x",       "up"),     # side stick
-    42: ("E",  5, "x",       "up"),     # hihat closed
-    44: ("E",  5, "x",       "up"),     # hihat pedal
-    46: ("F",  5, "x",       "up"),     # hihat open
+    42: ("G",  5, "x",       "up"),     # hihat closed
+    44: ("G",  5, "x",       "up"),     # hihat pedal
+    46: ("G",  5, "x",       "up"),     # hihat open
     49: ("A",  5, "x",       "up"),     # crash 1
     57: ("A",  5, "x",       "up"),     # crash 2
-    51: ("G",  5, "x",       "up"),     # ride 1
-    59: ("G",  5, "x",       "up"),     # ride 2
-    53: ("G",  5, "x",       "up"),     # ride bell
-    48: ("D",  5, "normal",  "up"),     # hi tom
-    50: ("D",  5, "normal",  "up"),     # hi-mid tom
-    45: ("A",  4, "normal",  "up"),     # mid tom
-    47: ("A",  4, "normal",  "up"),     # low-mid tom
-    41: ("G",  4, "normal",  "up"),     # low tom
-    43: ("G",  4, "normal",  "up"),     # high floor tom
+    51: ("F",  5, "x",       "up"),     # ride 1
+    59: ("F",  5, "x",       "up"),     # ride 2
+    53: ("F",  5, "x",       "up"),     # ride bell
+    48: ("E",  5, "normal",  "up"),     # hi tom (탐1)
+    50: ("E",  5, "normal",  "up"),     # hi-mid tom
+    45: ("D",  5, "normal",  "up"),     # mid tom (탐2)
+    47: ("D",  5, "normal",  "up"),     # low-mid tom
+    41: ("A",  4, "normal",  "up"),     # floor tom
+    43: ("A",  4, "normal",  "up"),     # floor tom
 }
 _DEFAULT_NOTATION = ("B", 4, "normal", "up")
 
