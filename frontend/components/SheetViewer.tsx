@@ -25,24 +25,50 @@ export interface SheetViewerHandle {
   goToMeasure: (measure: number) => void
 }
 
-function moveCursor(osmd: any, measure: number) {
+function highlightMeasure(osmd: any, measureIndex: number) {
   try {
-    const cursor = osmd.cursors?.[0] ?? osmd.cursor
-    if (!cursor) return
-    cursor.reset()
-    while (
-      cursor.iterator.CurrentMeasureIndex < measure &&
-      !cursor.iterator.EndReached
-    ) {
-      cursor.next()
+    const container = osmd.container as HTMLElement | undefined
+    if (!container) return
+    const svg = container.querySelector('svg')
+    if (!svg) return
+
+    // 이전 하이라이트 제거
+    svg.querySelectorAll('.sori-highlight').forEach((el: Element) => el.remove())
+    if (measureIndex < 0) return
+
+    const measureList: any[][] =
+      osmd.GraphicSheet?.MeasureList ?? osmd.graphic?.MeasureList
+    if (!measureList || measureIndex >= measureList.length) return
+
+    const staffMeasures: any[] = measureList[measureIndex] ?? []
+    for (const m of staffMeasures) {
+      if (!m?.PositionAndShape) continue
+      const pos = m.PositionAndShape.AbsolutePosition
+      const size = m.PositionAndShape.Size
+      // OSMD SVG backend: 1 unit = 10 SVG px
+      const S = 10
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+      rect.setAttribute('x', String(pos.x * S))
+      rect.setAttribute('y', String(pos.y * S))
+      rect.setAttribute('width', String(size.width * S))
+      rect.setAttribute('height', String(size.height * S))
+      rect.setAttribute('fill', '#7c3aed')
+      rect.setAttribute('fill-opacity', '0.18')
+      rect.setAttribute('rx', '3')
+      rect.setAttribute('class', 'sori-highlight')
+      rect.setAttribute('pointer-events', 'none')
+      svg.insertBefore(rect, svg.firstChild)
     }
-    cursor.show()
 
     // 해당 마디로 자동 스크롤
-    const el: HTMLElement | undefined = cursor.cursorElement
-    el?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
-  } catch {
-    // ignore
+    const first = staffMeasures[0]
+    if (first?.PositionAndShape) {
+      const y = first.PositionAndShape.AbsolutePosition.y * 10
+      const el = svg.closest('.sheet-scroll') as HTMLElement | null
+      el?.scrollTo?.({ top: y - 40, behavior: 'smooth' })
+    }
+  } catch (e) {
+    console.error('highlight error', e)
   }
 }
 
@@ -55,13 +81,13 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
 
     useImperativeHandle(ref, () => ({
       goToMeasure(measure: number) {
-        if (osmdRef.current) moveCursor(osmdRef.current, measure)
+        if (osmdRef.current) highlightMeasure(osmdRef.current, measure)
       },
     }))
 
     useEffect(() => {
       if (currentMeasure == null || !osmdRef.current) return
-      moveCursor(osmdRef.current, currentMeasure)
+      highlightMeasure(osmdRef.current, currentMeasure)
     }, [currentMeasure])
 
     useEffect(() => {
@@ -82,15 +108,6 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
             drawTitle: false,
             drawComposer: false,
             drawCredits: false,
-            // 커서: 마디 전체를 덮는 보라색 하이라이트
-            cursorsOptions: [
-              {
-                type: 0,
-                color: '#7c3aed',
-                alpha: 0.25,
-                follow: true,
-              },
-            ],
           })
 
           const res = await fetch(url)
@@ -99,20 +116,6 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
           if (cancelled) return
           osmd.render()
           osmdRef.current = osmd
-
-          // 커서 초기화
-          const cursor = osmd.cursors?.[0] ?? osmd.cursor
-          if (cursor) {
-            cursor.show()
-            cursor.hide()  // 재생 전엔 숨김
-            // 커서 스타일: 얇은 선 → 넓은 사각형
-            if (cursor.cursorElement) {
-              const el = cursor.cursorElement as HTMLElement
-              el.style.width = 'auto'
-              el.style.minWidth = '24px'
-              el.style.opacity = '1'
-            }
-          }
         } catch (e) {
           console.error('SheetViewer error:', e)
           if (!cancelled) setError(e instanceof Error ? e.message : String(e))
@@ -126,7 +129,7 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
     }, [url])
 
     return (
-      <div className="rounded-xl border border-white/5 bg-white overflow-auto max-h-[60vh] min-h-40 relative">
+      <div className="rounded-xl border border-white/5 bg-white overflow-auto max-h-[60vh] min-h-40 relative sheet-scroll">
         {loading && !error && (
           <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm z-10 bg-white">
             악보 렌더링 중…
