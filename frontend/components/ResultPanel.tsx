@@ -17,6 +17,10 @@ interface ResultPanelProps {
 
 export default function ResultPanel({ result }: ResultPanelProps) {
   const [currentMeasure, setCurrentMeasure] = useState(0)
+
+  function handleMeasure(measure: number) {
+    setCurrentMeasure(measure + 1)
+  }
   const sheetRef = useRef<SheetViewerHandle>(null)
 
   return (
@@ -27,15 +31,19 @@ export default function ResultPanel({ result }: ResultPanelProps) {
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <p className="text-xs text-white/40">악보 미리보기</p>
-          <p className="text-xs text-purple-400">마디 {currentMeasure + 1}</p>
+          {currentMeasure > 0 && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-600/30 text-purple-300">
+              {currentMeasure} 마디
+            </span>
+          )}
         </div>
-        <SheetViewer ref={sheetRef} url={result.musicxmlUrl} currentMeasure={currentMeasure} />
+        <SheetViewer ref={sheetRef} url={result.musicxmlUrl} currentMeasure={currentMeasure - 1} />
       </div>
 
       {/* MIDI 미리듣기 */}
       <div className="flex flex-col gap-3">
         <p className="text-xs text-white/40">MIDI 미리듣기</p>
-        <MidiPlayer url={result.midiUrl} instrument={result.instrument} onMeasure={setCurrentMeasure} />
+        <MidiPlayer url={result.midiUrl} instrument={result.instrument} onMeasure={handleMeasure} />
       </div>
 
       {/* 다운로드 버튼 */}

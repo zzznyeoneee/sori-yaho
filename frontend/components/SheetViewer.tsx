@@ -11,6 +11,27 @@ export interface SheetViewerHandle {
   goToMeasure: (measure: number) => void
 }
 
+function moveCursor(osmd: any, measure: number) {
+  try {
+    const cursor = osmd.cursors?.[0] ?? osmd.cursor
+    if (!cursor) return
+    cursor.reset()
+    while (
+      cursor.iterator.CurrentMeasureIndex < measure &&
+      !cursor.iterator.EndReached
+    ) {
+      cursor.next()
+    }
+    cursor.show()
+
+    // 해당 마디로 자동 스크롤
+    const el: HTMLElement | undefined = cursor.cursorElement
+    el?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
+  } catch {
+    // ignore
+  }
+}
+
 const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
   function SheetViewer({ url, currentMeasure }, ref) {
     const containerRef = useRef<HTMLDivElement>(null)
@@ -20,40 +41,13 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
 
     useImperativeHandle(ref, () => ({
       goToMeasure(measure: number) {
-        const osmd = osmdRef.current
-        if (!osmd?.cursor) return
-        try {
-          osmd.cursor.reset()
-          while (
-            osmd.cursor.iterator.CurrentMeasureIndex < measure &&
-            !osmd.cursor.iterator.EndReached
-          ) {
-            osmd.cursor.next()
-          }
-          osmd.cursor.show()
-        } catch {
-          // cursor 이동 실패 시 무시
-        }
+        if (osmdRef.current) moveCursor(osmdRef.current, measure)
       },
     }))
 
-    // currentMeasure prop 변경 시 cursor 이동
     useEffect(() => {
-      if (currentMeasure == null) return
-      const osmd = osmdRef.current
-      if (!osmd?.cursor) return
-      try {
-        osmd.cursor.reset()
-        while (
-          osmd.cursor.iterator.CurrentMeasureIndex < currentMeasure &&
-          !osmd.cursor.iterator.EndReached
-        ) {
-          osmd.cursor.next()
-        }
-        osmd.cursor.show()
-      } catch {
-        // ignore
-      }
+      if (currentMeasure == null || !osmdRef.current) return
+      moveCursor(osmdRef.current, currentMeasure)
     }, [currentMeasure])
 
     useEffect(() => {
@@ -74,6 +68,15 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
             drawTitle: false,
             drawComposer: false,
             drawCredits: false,
+            // 커서: 마디 전체를 덮는 보라색 하이라이트
+            cursorsOptions: [
+              {
+                type: 0,
+                color: '#7c3aed',
+                alpha: 0.25,
+                follow: true,
+              },
+            ],
           })
 
           const res = await fetch(url)
@@ -82,6 +85,20 @@ const SheetViewer = forwardRef<SheetViewerHandle, SheetViewerProps>(
           if (cancelled) return
           osmd.render()
           osmdRef.current = osmd
+
+          // 커서 초기화
+          const cursor = osmd.cursors?.[0] ?? osmd.cursor
+          if (cursor) {
+            cursor.show()
+            cursor.hide()  // 재생 전엔 숨김
+            // 커서 스타일: 얇은 선 → 넓은 사각형
+            if (cursor.cursorElement) {
+              const el = cursor.cursorElement as HTMLElement
+              el.style.width = 'auto'
+              el.style.minWidth = '24px'
+              el.style.opacity = '1'
+            }
+          }
         } catch (e) {
           console.error('SheetViewer error:', e)
           if (!cancelled) setError(e instanceof Error ? e.message : String(e))
