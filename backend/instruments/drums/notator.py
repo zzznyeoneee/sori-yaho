@@ -14,8 +14,8 @@ from music21.note import NotRest
 #   lines(아래→위): E4 G4 B4 D5 F5
 #   spaces: F4 A4 C5 E5
 _DRUM_NOTATION = {
-    35: ("C",  4, "normal",  "down"),   # acoustic bass drum (kick)
-    36: ("C",  4, "normal",  "down"),   # bass drum 1 (kick)
+    35: ("F",  4, "normal",  "down"),   # acoustic bass drum (kick)
+    36: ("F",  4, "normal",  "down"),   # bass drum 1 (kick)
     38: ("B",  4, "normal",  "up"),     # snare
     40: ("B",  4, "normal",  "up"),     # electric snare
     37: ("C",  5, "x",       "up"),     # side stick
