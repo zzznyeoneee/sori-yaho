@@ -22,6 +22,7 @@ export default function TabViewer({ url }: TabViewerProps) {
       const settings = new at.Settings()
       settings.core.engine = 'html5'
       settings.core.logLevel = at.LogLevel?.None ?? 0
+      settings.core.fontDirectory = '/font/'
       settings.display.layoutMode = at.LayoutMode?.Page ?? 0
       settings.display.scale = 0.9
       settings.player.enablePlayer = false
