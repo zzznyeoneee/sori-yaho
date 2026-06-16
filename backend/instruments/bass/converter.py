@@ -25,12 +25,10 @@ def audio_to_midi(audio_path: str, output_dir: str) -> str:
     model_output, midi_data, note_events = predict(
         str(audio_path),
         model,
-        onset_threshold=0.5,
-        frame_threshold=0.3,
-        minimum_note_length=58,
-        minimum_frequency=40.0,
-        maximum_frequency=200.0,
-        melodia_trick=True,
+        onset_threshold=0.3,
+        frame_threshold=0.2,
+        minimum_note_length=30,
+        melodia_trick=False,
     )
 
     # 베이스 음역대 밖 음표 제거
