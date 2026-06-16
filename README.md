@@ -82,6 +82,7 @@ pip install piano_transcription_inference
 # 4. 베이스 채보 모델
 pip install basic-pitch==0.4.0 onnxruntime
 pip install tf-keras==2.15.0
+pip install PyGuitarPro
 ```
 
 > CUDA 버전 설치 시 GPU 드라이버 버전 불일치 오류가 나면 CPU 버전으로 설치하세요.
@@ -165,8 +166,9 @@ npm run dev
 3. MP3 또는 WAV 파일 드래그앤드롭 또는 클릭해서 업로드 (최대 50MB)
 4. 변환 완료 후:
    - 악보 미리보기 (MusicXML 렌더링)
+   - 베이스는 악보/TAB 토글로 타브 악보 확인 가능
    - MIDI 재생 시 현재 마디 하이라이트
-   - MIDI / MusicXML 다운로드
+   - MIDI / MusicXML / TAB(.gp5) 다운로드
 
 ---
 
@@ -260,7 +262,7 @@ sori-yaho/
         │   └── notator.py     # MIDI → MusicXML
         ├── bass/
         │   ├── separator.py   # Demucs 베이스 트랙 분리
-        │   └── converter.py   # 오디오 → MIDI → MusicXML
+        │   └── converter.py   # 오디오 → MIDI → MusicXML + GuitarPro 타브
         └── piano/
             ├── converter.py   # 오디오 → MIDI → MusicXML
             ├── analyzer.py    # MIDI 파싱 + 손 분리
@@ -279,6 +281,8 @@ sori-yaho/
 | 드럼 채보 | librosa, pretty_midi |
 | 피아노 채보 | piano_transcription_inference (GPU 가속) |
 | 베이스 채보 | basic-pitch (Spotify) |
+| 타브 악보 생성 | PyGuitarPro |
+| 타브 악보 렌더링 | alphaTab |
 | 악보 생성 | music21 |
 | 악보 렌더링 | OpenSheetMusicDisplay |
 | MIDI 재생 | midi-player-js + soundfont-player |
