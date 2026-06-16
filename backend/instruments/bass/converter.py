@@ -82,8 +82,8 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
     song = guitarpro.Song()
     song.tempo = int(bpm)
 
-    # 베이스 트랙
-    track = guitarpro.Track()
+    # 베이스 트랙 (song을 인자로 전달)
+    track = guitarpro.Track(song)
     track.name = "Bass"
     track.isBass = True
     track.strings = [
