@@ -25,7 +25,7 @@ export default function TabViewer({ url }: TabViewerProps) {
         if (window.alphaTab) { resolve(); return }
 
         const script = document.createElement('script')
-        script.src = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/alphaTab.js'
+        script.src = '/alphaTab.js'
         script.onload = () => resolve()
         script.onerror = () => reject(new Error('alphaTab CDN 로드 실패'))
         document.head.appendChild(script)
