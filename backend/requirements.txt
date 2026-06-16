@@ -21,3 +21,4 @@ piano_transcription_inference
 
 # 베이스 채보
 basic-pitch
+PyGuitarPro

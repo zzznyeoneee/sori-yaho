@@ -6,7 +6,7 @@ const nextConfig = {
     }
     return config
   },
-  transpilePackages: ['opensheetmusicdisplay'],
+  transpilePackages: ['opensheetmusicdisplay', '@coderline/alphatab'],
 }
 
 export default nextConfig;

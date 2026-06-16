@@ -1,8 +1,9 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import MidiPlayer from './MidiPlayer'
 import SheetViewer, { SheetViewerHandle } from './SheetViewer'
+import TabViewer from './TabViewer'
 
 export interface TranscribeResult {
   midiUrl: string
@@ -18,22 +19,12 @@ interface ResultPanelProps {
 
 export default function ResultPanel({ result }: ResultPanelProps) {
   const [currentMeasure, setCurrentMeasure] = useState(0)
-  const [tabContent, setTabContent] = useState<string | null>(null)
   const [view, setView] = useState<'sheet' | 'tab'>('sheet')
 
   function handleMeasure(measure: number) {
     setCurrentMeasure(measure + 1)
   }
   const sheetRef = useRef<SheetViewerHandle>(null)
-
-  useEffect(() => {
-    if (result.tabUrl) {
-      fetch(result.tabUrl)
-        .then(r => r.text())
-        .then(setTabContent)
-        .catch(() => setTabContent(null))
-    }
-  }, [result.tabUrl])
 
   return (
     <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-6 flex flex-col gap-6">
@@ -71,11 +62,7 @@ export default function ResultPanel({ result }: ResultPanelProps) {
         {view === 'sheet' || !result.tabUrl ? (
           <SheetViewer ref={sheetRef} url={result.musicxmlUrl} currentMeasure={currentMeasure - 1} />
         ) : (
-          <div className="bg-black/30 rounded-xl p-4 overflow-auto max-h-96">
-            <pre className="text-green-400 text-xs leading-5 font-mono whitespace-pre">
-              {tabContent ?? '로딩 중...'}
-            </pre>
-          </div>
+          <TabViewer url={result.tabUrl} />
         )}
       </div>
 
@@ -104,7 +91,7 @@ export default function ResultPanel({ result }: ResultPanelProps) {
         {result.tabUrl && (
           <a
             href={result.tabUrl}
-            download={`${result.filename}_tab.txt`}
+            download={`${result.filename}_tab.gp5`}
             className="flex-1 text-center py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 text-sm font-semibold transition-colors"
           >
             TAB 다운로드
