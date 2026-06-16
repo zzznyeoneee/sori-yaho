@@ -23,34 +23,46 @@
 
 ---
 
+## 환경 구성 안내
+
+> **백엔드는 WSL(Windows Subsystem for Linux)에서 실행합니다.**
+> 프론트엔드는 Windows PowerShell에서 실행합니다.
+>
+> WSL과 Windows의 `venv`는 서로 공유되지 않으므로 각각 따로 설치해야 합니다.
+> 단, **최초 1회만** 설치하면 이후 브랜치를 바꿔도 다시 설치할 필요 없습니다.
+
+---
+
 ## 처음 설치 (최초 1회)
 
 ### 1. 저장소 클론
 
-```bash
+**Windows PowerShell:**
+```powershell
 git clone https://github.com/zzznyeoneee/sori-yaho.git
 cd sori-yaho
 ```
 
 ---
 
-### 2. 백엔드 환경 설정
+### 2. 백엔드 환경 설정 (WSL)
 
-```bash
-cd backend
+PowerShell에서 WSL 접속:
+```powershell
+wsl
 ```
+
+WSL 안에서:
+```bash
+cd /mnt/c/Users/<내 사용자명>/sori-yaho/backend
+```
+
+> `<내 사용자명>` 은 본인 Windows 사용자 이름으로 바꾸세요. (예: `zzznxeoneee`)
 
 #### 가상환경 생성 및 활성화
 
-**Windows (PowerShell):**
-```powershell
-python -m venv venv
-venv\Scripts\Activate.ps1
-```
-
-**Mac / Linux:**
 ```bash
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 ```
 
@@ -62,7 +74,7 @@ source venv/bin/activate
 # 1. PyTorch — NVIDIA GPU 사용 시 (CUDA 12.4)
 pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124
 
-# CPU만 사용할 경우
+# GPU 없이 CPU만 사용할 경우
 pip install torch torchaudio
 
 # 2. 나머지 패키지
@@ -74,28 +86,29 @@ pip install piano_transcription_inference
 
 #### 환경변수 파일 생성
 
-`backend/.env` 파일을 직접 만들고 아래 내용 입력:
+`backend/.env` 파일을 만들고 아래 내용 입력:
 
-**Windows:**
-```
-UPLOAD_DIR=C:/tmp/sori-yaho/uploads
-OUTPUT_DIR=C:/tmp/sori-yaho/outputs
-```
-
-**Mac / Linux:**
-```
+```bash
+cat > .env << 'EOF'
 UPLOAD_DIR=/tmp/sori-yaho/uploads
 OUTPUT_DIR=/tmp/sori-yaho/outputs
+EOF
+```
+
+업로드 디렉토리도 생성:
+
+```bash
+mkdir -p /tmp/sori-yaho/uploads /tmp/sori-yaho/outputs
 ```
 
 ---
 
-### 3. 프론트엔드 환경 설정
+### 3. 프론트엔드 환경 설정 (Windows PowerShell)
 
-새 터미널을 열고:
+새 PowerShell 창을 열고:
 
-```bash
-cd frontend
+```powershell
+cd C:\Users\<내 사용자명>\sori-yaho\frontend
 ```
 
 #### 환경변수 파일 생성
@@ -108,7 +121,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 #### 패키지 설치
 
-```bash
+```powershell
 npm install
 ```
 
@@ -118,18 +131,17 @@ npm install
 
 **터미널 2개**를 열어서 각각 실행합니다.
 
-### 터미널 1 — 백엔드
+### 터미널 1 — 백엔드 (WSL)
+
+```powershell
+wsl
+```
+
+WSL 안에서:
 
 ```bash
-cd backend
-
-# 가상환경 활성화 (Windows)
-venv\Scripts\Activate.ps1
-
-# 가상환경 활성화 (Mac/Linux)
+cd /mnt/c/Users/<내 사용자명>/sori-yaho/backend
 source venv/bin/activate
-
-# 서버 시작
 python -m uvicorn main:app --reload
 ```
 
@@ -143,10 +155,10 @@ python -m uvicorn main:app --reload
 
 ---
 
-### 터미널 2 — 프론트엔드
+### 터미널 2 — 프론트엔드 (Windows PowerShell)
 
-```bash
-cd frontend
+```powershell
+cd C:\Users\<내 사용자명>\sori-yaho\frontend
 npm run dev
 ```
 
@@ -168,12 +180,20 @@ npm run dev
 
 ## 자주 발생하는 문제
 
-### `venv\Scripts\Activate.ps1 cannot be loaded` (Windows)
+### WSL이 설치되지 않은 경우
 
-PowerShell 실행 정책 문제입니다. 아래 명령어를 **관리자 권한**으로 실행:
+PowerShell **관리자 권한**으로 실행:
 
 ```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+wsl --install
+```
+
+설치 후 PC 재시작. 이후 `wsl` 명령어로 접속 가능.
+
+### WSL에서 python3 명령어가 없는 경우
+
+```bash
+sudo apt update && sudo apt install python3 python3-pip python3-venv -y
 ```
 
 ### 백엔드 실행 시 `ModuleNotFoundError`
@@ -182,15 +202,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ### 업로드 디렉토리 오류
 
-`.env` 에 설정한 경로가 실제로 존재해야 합니다.
-
-**Windows:**
-```powershell
-mkdir C:\tmp\sori-yaho\uploads
-mkdir C:\tmp\sori-yaho\outputs
-```
-
-**Mac / Linux:**
+WSL에서:
 ```bash
 mkdir -p /tmp/sori-yaho/uploads /tmp/sori-yaho/outputs
 ```
