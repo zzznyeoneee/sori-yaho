@@ -11,7 +11,7 @@ BASS_PITCH_MAX = 55
 
 def audio_to_midi(audio_path: str, output_dir: str) -> str:
     """Basic Pitch로 베이스 WAV → MIDI 변환."""
-    from basic_pitch.inference import predict
+    from basic_pitch.inference import predict, Model
     from basic_pitch import ICASSP_2022_MODEL_PATH
     import pretty_midi
 
@@ -20,14 +20,16 @@ def audio_to_midi(audio_path: str, output_dir: str) -> str:
 
     logger.info("Basic Pitch 베이스 채보 시작: %s", audio_path)
 
+    model = Model(ICASSP_2022_MODEL_PATH)
+
     model_output, midi_data, note_events = predict(
         str(audio_path),
-        ICASSP_2022_MODEL_PATH,
+        model,
         onset_threshold=0.5,
         frame_threshold=0.3,
-        minimum_note_length=58,   # ms
-        minimum_frequency=40.0,   # Hz — E1 근처
-        maximum_frequency=200.0,  # Hz — G3 근처
+        minimum_note_length=58,
+        minimum_frequency=40.0,
+        maximum_frequency=200.0,
         melodia_trick=True,
     )
 
