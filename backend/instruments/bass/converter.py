@@ -65,7 +65,7 @@ def midi_to_musicxml(midi_path: str, output_dir: str) -> str:
     score = converter.parse(str(midi_path))
 
     # 단일 파트로 합치고 베이스 클레프 적용
-    flat = score.flat.notes.stream()
+    flat = score.flatten().notes.stream()
     part = stream.Part()
     part.id = "Bass"
 
