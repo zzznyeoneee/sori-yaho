@@ -49,6 +49,66 @@ def audio_to_midi(audio_path: str, output_dir: str) -> str:
     return str(midi_path)
 
 
+def midi_to_tab(midi_path: str, output_dir: str) -> str:
+    """MIDI → 베이스 ASCII 타브 악보 생성."""
+    import pretty_midi
+
+    midi_path = Path(midi_path)
+    output_dir = Path(output_dir)
+
+    # 베이스 표준 튜닝 개방현 MIDI 음높이 (1현~4현: G2, D2, A1, E1)
+    STRINGS = [43, 38, 33, 28]
+    STRING_NAMES = ['G', 'D', 'A', 'E']
+    MAX_FRET = 24
+    NOTES_PER_LINE = 32
+
+    midi = pretty_midi.PrettyMIDI(str(midi_path))
+    all_notes = []
+    for inst in midi.instruments:
+        all_notes.extend(inst.notes)
+    all_notes.sort(key=lambda n: n.start)
+
+    def best_position(pitch_val, prev_fret=None):
+        candidates = []
+        for i, open_pitch in enumerate(STRINGS):
+            fret = pitch_val - open_pitch
+            if 0 <= fret <= MAX_FRET:
+                cost = fret + (abs(fret - prev_fret) * 0.5 if prev_fret is not None else 0)
+                candidates.append((cost, i, fret))
+        if not candidates:
+            return 0, 0
+        return min(candidates)[1], min(candidates)[2]
+
+    # 각 음표에 현/프렛 할당
+    assigned = []
+    prev_fret = None
+    for n in all_notes:
+        s, f = best_position(n.pitch, prev_fret)
+        assigned.append((s, f))
+        prev_fret = f
+
+    # ASCII 타브 생성
+    lines = []
+    for start in range(0, len(assigned), NOTES_PER_LINE):
+        chunk = assigned[start:start + NOTES_PER_LINE]
+        rows = [f"{STRING_NAMES[i]}|" for i in range(4)]
+        for s, f in chunk:
+            fret_str = str(f)
+            for i in range(4):
+                if i == s:
+                    rows[i] += fret_str + '-' * (3 - len(fret_str))
+                else:
+                    rows[i] += '---'
+        rows = [r + '|' for r in rows]
+        lines.append('\n'.join(rows))
+        lines.append('')
+
+    tab_path = output_dir / "bass_tab.txt"
+    tab_path.write_text('\n'.join(lines), encoding='utf-8')
+    logger.info("타브 악보 저장: %s", tab_path)
+    return str(tab_path)
+
+
 def midi_to_musicxml(midi_path: str, output_dir: str) -> str:
     """MIDI → MusicXML 변환 (베이스 클레프 단일 보표)."""
     from music21 import converter, clef

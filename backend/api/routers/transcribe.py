@@ -43,13 +43,14 @@ async def transcribe(
     audio_path = upload_dir / f"input{suffix}"
     audio_path.write_bytes(content)
 
+    tab_path = None
     try:
         if instrument == "drums":
             midi_path, xml_path = _run_drums(str(audio_path), str(output_dir))
         elif instrument == "piano":
             midi_path, xml_path = _run_piano(str(audio_path), str(output_dir))
         elif instrument == "bass":
-            midi_path, xml_path = _run_bass(str(audio_path), str(output_dir))
+            midi_path, xml_path, tab_path = _run_bass(str(audio_path), str(output_dir))
         else:
             raise HTTPException(status_code=400, detail=f"지원하지 않는 악기입니다: {instrument}")
     except Exception as e:
@@ -59,6 +60,10 @@ async def transcribe(
 
     midi_rel = Path(midi_path).relative_to(settings.OUTPUT_DIR)
     xml_rel = Path(xml_path).relative_to(settings.OUTPUT_DIR)
+    tab_url = None
+    if tab_path:
+        tab_rel = Path(tab_path).relative_to(settings.OUTPUT_DIR)
+        tab_url = f"/files/{tab_rel}"
 
     return TranscribeResponse(
         success=True,
@@ -66,6 +71,7 @@ async def transcribe(
         instrument=instrument,
         midi_url=f"/files/{midi_rel}",
         musicxml_url=f"/files/{xml_rel}",
+        tab_url=tab_url,
     )
 
 
@@ -90,9 +96,10 @@ def _run_piano(audio_path: str, output_dir: str):
 
 def _run_bass(audio_path: str, output_dir: str):
     from instruments.bass.separator import separate_bass
-    from instruments.bass.converter import audio_to_midi, midi_to_musicxml
+    from instruments.bass.converter import audio_to_midi, midi_to_musicxml, midi_to_tab
 
     bass_wav = separate_bass(audio_path, output_dir)
     midi_path = audio_to_midi(bass_wav, output_dir)
     xml_path = midi_to_musicxml(midi_path, output_dir)
-    return midi_path, xml_path
+    tab_path = midi_to_tab(midi_path, output_dir)
+    return midi_path, xml_path, tab_path

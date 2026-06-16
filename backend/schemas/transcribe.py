@@ -9,3 +9,4 @@ class TranscribeResponse(BaseModel):
     instrument: str
     midi_url: str | None = None
     musicxml_url: str | None = None
+    tab_url: str | None = None
