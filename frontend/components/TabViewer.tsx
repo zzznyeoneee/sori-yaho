@@ -1,50 +1,83 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface TabViewerProps {
   url: string
 }
 
+declare global {
+  interface Window {
+    alphaTab: any
+  }
+}
+
 export default function TabViewer({ url }: TabViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const apiRef = useRef<unknown>(null)
+  const apiRef = useRef<any>(null)
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
   useEffect(() => {
     if (!containerRef.current) return
 
-    let api: unknown = null
+    const loadAlphaTab = () => {
+      return new Promise<void>((resolve, reject) => {
+        if (window.alphaTab) { resolve(); return }
 
-    const load = async () => {
-      const alphaTab = await import('@coderline/alphatab')
-      const at = alphaTab.alphaTab ?? alphaTab.default ?? alphaTab
-
-      const settings = new at.Settings()
-      settings.core.engine = 'html5'
-      settings.core.logLevel = at.LogLevel?.None ?? 0
-      settings.core.fontDirectory = '/font/'
-      settings.display.layoutMode = at.LayoutMode?.Page ?? 0
-      settings.display.scale = 0.9
-      settings.player.enablePlayer = false
-
-      api = new at.AlphaTabApi(containerRef.current!, settings)
-      apiRef.current = api
-
-      const res = await fetch(url)
-      const buf = await res.arrayBuffer()
-      const bytes = new Uint8Array(buf)
-      ;(api as any).load(bytes)
+        const script = document.createElement('script')
+        script.src = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/alphaTab.js'
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('alphaTab CDN 로드 실패'))
+        document.head.appendChild(script)
+      })
     }
 
-    load().catch(console.error)
+    const init = async () => {
+      try {
+        await loadAlphaTab()
+        const at = window.alphaTab
+
+        const settings = new at.Settings()
+        settings.core.engine = 'html5'
+        settings.core.logLevel = at.LogLevel.None
+        settings.core.fontDirectory = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/font/'
+        settings.display.layoutMode = at.LayoutMode.Page
+        settings.display.scale = 0.9
+        settings.player.enablePlayer = false
+
+        const api = new at.AlphaTabApi(containerRef.current!, settings)
+        apiRef.current = api
+
+        api.renderFinished.on(() => setStatus('ready'))
+
+        const res = await fetch(url)
+        const buf = await res.arrayBuffer()
+        api.load(new Uint8Array(buf))
+      } catch (e) {
+        console.error(e)
+        setStatus('error')
+      }
+    }
+
+    init()
 
     return () => {
-      try { (apiRef.current as any)?.destroy?.() } catch {}
+      try { apiRef.current?.destroy?.() } catch {}
     }
   }, [url])
 
   return (
-    <div className="bg-white rounded-xl overflow-auto max-h-[500px]">
+    <div className="bg-white rounded-xl overflow-auto max-h-[500px] min-h-[200px] relative">
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+          타브 악보 로딩 중...
+        </div>
+      )}
+      {status === 'error' && (
+        <div className="absolute inset-0 flex items-center justify-center text-red-400 text-sm">
+          타브 악보 로드 실패
+        </div>
+      )}
       <div ref={containerRef} />
     </div>
   )
