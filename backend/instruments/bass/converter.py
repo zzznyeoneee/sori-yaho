@@ -64,8 +64,11 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
 
     midi = pretty_midi.PrettyMIDI(str(midi_path))
     # 템포 이벤트에서 BPM 읽기 (없으면 120 기본값)
+    # estimate_tempo()가 이상한 값을 반환할 수 있으므로 합리적인 범위로 클램프
     tempo_times, tempos = midi.get_tempo_changes()
-    bpm = tempos[0] if len(tempos) > 0 else 120.0
+    bpm = float(tempos[0]) if len(tempos) > 0 else 120.0
+    bpm = max(60.0, min(240.0, bpm))
+    logger.info("midi_to_tab BPM: %.1f", bpm)
     all_notes = []
     for inst in midi.instruments:
         all_notes.extend(inst.notes)
@@ -97,8 +100,10 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
     track.channel.instrument = 33  # Electric Bass
 
     beats_per_measure = 4
-    seconds_per_beat = 60.0 / int(bpm)
+    seconds_per_beat = 60.0 / bpm
     seconds_per_measure = seconds_per_beat * beats_per_measure
+    # 4/4박자에서 1/16음표 기준 최대 비트 수 (알파탭 임계값 100 이하로 유지)
+    MAX_BEATS_PER_MEASURE = beats_per_measure * 16  # = 64
 
     # 음표를 마디별로 그룹화
     max_time = all_notes[-1].end if all_notes else 0
@@ -137,9 +142,13 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
             voice.beats.append(beat)
         else:
             for n in measure_notes:
+                # 마디 비트 수 초과 방지 (alphaTab 임계값 100 이하)
+                if len(voice.beats) >= MAX_BEATS_PER_MEASURE:
+                    break
+
                 duration_sec = n.end - n.start
                 duration_beats = duration_sec / seconds_per_beat
-                # 가장 가까운 음표값 매핑
+                # 가장 가까운 음표값 매핑 (최소 1/16음표)
                 dur_map = [(4, 1), (2, 2), (1, 4), (0.5, 8), (0.25, 16)]
                 value = min(dur_map, key=lambda x: abs(x[0] - duration_beats))[1]
 
