@@ -142,7 +142,7 @@ WSL 안에서:
 ```bash
 cd /mnt/c/Users/<내 사용자명>/sori-yaho/backend
 source venv/bin/activate
-python -m uvicorn main:app --reload
+python3 -m uvicorn main:app --reload
 ```
 
 → `http://localhost:8000` 에서 실행됩니다.
