@@ -51,7 +51,7 @@ def audio_to_midi(audio_path: str, output_dir: str) -> str:
 
 def midi_to_musicxml(midi_path: str, output_dir: str) -> str:
     """MIDI → MusicXML 변환 (베이스 클레프 단일 보표)."""
-    from music21 import converter, stream, clef, tempo, meter, key
+    from music21 import converter, clef
 
     midi_path = Path(midi_path)
     output_dir = Path(output_dir)
@@ -60,37 +60,16 @@ def midi_to_musicxml(midi_path: str, output_dir: str) -> str:
 
     score = converter.parse(str(midi_path))
 
-    # BPM 추출
-    bpm = 120
-    try:
-        bpm_marks = score.flatten().getElementsByClass(tempo.MetronomeMark)
-        if bpm_marks:
-            bpm = int(bpm_marks[0].number)
-    except Exception:
-        pass
-
-    # 모든 파트의 음표를 하나로 합치기
-    all_notes = list(score.flatten().notes)
-
-    part = stream.Part()
-    part.id = "Bass"
-
-    first_measure = stream.Measure(number=1)
-    first_measure.append(clef.BassClef())
-    first_measure.append(meter.TimeSignature("4/4"))
-    first_measure.append(key.KeySignature(0))
-    first_measure.append(tempo.MetronomeMark(number=bpm))
-    part.append(first_measure)
-
-    for el in all_notes:
-        part.append(el)
-
-    out_score = stream.Score()
-    out_score.append(part)
-    out_score.makeNotation(inPlace=True)
+    # 첫 파트에 베이스 클레프 적용
+    for part in score.parts:
+        measures = part.getElementsByClass('Measure')
+        if measures:
+            first_measure = measures[0]
+            first_measure.clef = clef.BassClef()
+        break
 
     xml_path = output_dir / "bass.musicxml"
-    out_score.write("musicxml", fp=str(xml_path))
-    logger.info("MusicXML 저장: %s", xml_path)
+    score.write("musicxml", fp=str(xml_path))
+    logger.info("MusicXML 저장: %s (%d notes)", xml_path, len(list(score.flatten().notes)))
 
     return str(xml_path)
