@@ -8,6 +8,7 @@
 |------|------|
 | 🎹 피아노 | ✅ 구현 완료 |
 | 🥁 드럼 | ✅ 구현 완료 |
+| 🎸 베이스 | ✅ 구현 완료 |
 | 🎸 기타 | 🔜 준비 중 |
 
 ---
@@ -263,6 +264,7 @@ sori-yaho/
 | 트랙 분리 | Demucs (GPU 가속) |
 | 드럼 채보 | librosa, pretty_midi |
 | 피아노 채보 | piano_transcription_inference (GPU 가속) |
+| 베이스 채보 | basic-pitch (Spotify) |
 | 악보 생성 | music21 |
 | 악보 렌더링 | OpenSheetMusicDisplay |
 | MIDI 재생 | midi-player-js + soundfont-player |
