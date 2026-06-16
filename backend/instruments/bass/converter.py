@@ -63,7 +63,9 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
     MAX_FRET = 24
 
     midi = pretty_midi.PrettyMIDI(str(midi_path))
-    bpm = midi.estimate_tempo()
+    # 템포 이벤트에서 BPM 읽기 (없으면 120 기본값)
+    tempo_times, tempos = midi.get_tempo_changes()
+    bpm = tempos[0] if len(tempos) > 0 else 120.0
     all_notes = []
     for inst in midi.instruments:
         all_notes.extend(inst.notes)
