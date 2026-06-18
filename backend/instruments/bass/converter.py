@@ -53,7 +53,6 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
     """MIDI → GuitarPro(.gp5) 타브 악보 생성."""
     import pretty_midi
     import guitarpro
-    from fractions import Fraction
 
     midi_path = Path(midi_path)
     output_dir = Path(output_dir)
@@ -61,18 +60,23 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
     # 베이스 표준 튜닝 개방현 MIDI 음높이 (1현~4현: G2, D2, A1, E1)
     OPEN_STRINGS = [43, 38, 33, 28]
     MAX_FRET = 24
+    SLOTS_PER_MEASURE = 16  # 4/4박자 × 1/16음표 고정 그리드
 
     midi = pretty_midi.PrettyMIDI(str(midi_path))
-    # 템포 이벤트에서 BPM 읽기 (없으면 120 기본값)
-    # estimate_tempo()가 이상한 값을 반환할 수 있으므로 합리적인 범위로 클램프
     tempo_times, tempos = midi.get_tempo_changes()
     bpm = float(tempos[0]) if len(tempos) > 0 else 120.0
     bpm = max(60.0, min(240.0, bpm))
     logger.info("midi_to_tab BPM: %.1f", bpm)
+
     all_notes = []
     for inst in midi.instruments:
         all_notes.extend(inst.notes)
     all_notes.sort(key=lambda n: n.start)
+
+    if not all_notes:
+        logger.warning("MIDI에 음표가 없습니다.")
+        # 빈 악보 반환
+        all_notes = []
 
     def best_position(pitch_val, prev_fret=None):
         candidates = []
@@ -80,14 +84,26 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
             fret = pitch_val - open_pitch
             if 0 <= fret <= MAX_FRET:
                 cost = fret + (abs(fret - prev_fret) * 0.5 if prev_fret is not None else 0)
-                candidates.append((cost, i + 1, fret))  # 1-indexed string
+                candidates.append((cost, i + 1, fret))
         return min(candidates, default=(0, 1, 0))[1:]
+
+    # 1/16음표 그리드에 음표를 배치 (슬롯당 하나, 벨로시티 최대값 우선)
+    seconds_per_beat = 60.0 / bpm
+    grid_sec = seconds_per_beat / 4  # 1/16음표 길이(초)
+
+    slot_notes: dict[int, object] = {}
+    for n in all_notes:
+        slot = round(n.start / grid_sec)
+        if slot not in slot_notes or n.velocity > slot_notes[slot].velocity:
+            slot_notes[slot] = n
+
+    max_slot = max(slot_notes.keys()) if slot_notes else 0
+    num_measures = max(1, max_slot // SLOTS_PER_MEASURE + 1)
 
     # GuitarPro Song 구성
     song = guitarpro.Song()
     song.tempo = int(bpm)
 
-    # 베이스 트랙 (song을 인자로 전달)
     track = guitarpro.Track(song)
     track.name = "Bass"
     track.isBass = True
@@ -99,26 +115,13 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
     ]
     track.channel.instrument = 33  # Electric Bass
 
-    beats_per_measure = 4
-    seconds_per_beat = 60.0 / bpm
-    seconds_per_measure = seconds_per_beat * beats_per_measure
-    # 4/4박자에서 1/16음표 기준 최대 비트 수 (알파탭 임계값 100 이하로 유지)
-    MAX_BEATS_PER_MEASURE = beats_per_measure * 16  # = 64
-
-    # 음표를 마디별로 그룹화
-    max_time = all_notes[-1].end if all_notes else 0
-    num_measures = max(1, int(max_time / seconds_per_measure) + 1)
-
     prev_fret = None
-    note_idx = 0
 
     for m in range(num_measures):
-        measure_start = m * seconds_per_measure
-        measure_end = measure_start + seconds_per_measure
-
-        header = song.measureHeaders[m] if m < len(song.measureHeaders) else guitarpro.MeasureHeader()
+        header = (song.measureHeaders[m] if m < len(song.measureHeaders)
+                  else guitarpro.MeasureHeader())
         header.number = m + 1
-        header.timeSignature.numerator = beats_per_measure
+        header.timeSignature.numerator = 4
         header.timeSignature.denominator = guitarpro.Duration(value=4)
         if m >= len(song.measureHeaders):
             song.measureHeaders.append(header)
@@ -126,43 +129,26 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
         measure = guitarpro.Measure(track, header)
         voice = measure.voices[0]
 
-        # 이 마디에 속하는 음표 수집
-        measure_notes = []
-        while note_idx < len(all_notes) and all_notes[note_idx].start < measure_end:
-            n = all_notes[note_idx]
-            if n.start >= measure_start:
-                measure_notes.append(n)
-            note_idx += 1
-
-        if not measure_notes:
-            # 쉼표 박자 채우기
+        # 마디마다 정확히 SLOTS_PER_MEASURE(=16)개의 1/16음표 비트를 생성
+        # alphaTab 임계값(100)을 절대 초과하지 않음
+        for slot_in_measure in range(SLOTS_PER_MEASURE):
+            global_slot = m * SLOTS_PER_MEASURE + slot_in_measure
             beat = guitarpro.Beat(voice)
-            beat.duration = guitarpro.Duration(value=1)
-            beat.status = guitarpro.BeatStatus.rest
-            voice.beats.append(beat)
-        else:
-            for n in measure_notes:
-                # 마디 비트 수 초과 방지 (alphaTab 임계값 100 이하)
-                if len(voice.beats) >= MAX_BEATS_PER_MEASURE:
-                    break
+            beat.duration = guitarpro.Duration(value=16)  # 1/16음표
 
-                duration_sec = n.end - n.start
-                duration_beats = duration_sec / seconds_per_beat
-                # 가장 가까운 음표값 매핑 (최소 1/16음표)
-                dur_map = [(4, 1), (2, 2), (1, 4), (0.5, 8), (0.25, 16)]
-                value = min(dur_map, key=lambda x: abs(x[0] - duration_beats))[1]
-
+            if global_slot in slot_notes:
+                n = slot_notes[global_slot]
                 string_num, fret = best_position(n.pitch, prev_fret)
                 prev_fret = fret
 
                 gp_note = guitarpro.Note(string_num)
                 gp_note.value = fret
-                gp_note.velocity = min(127, max(1, n.velocity if hasattr(n, 'velocity') else 95))
-
-                beat = guitarpro.Beat(voice)
-                beat.duration = guitarpro.Duration(value=value)
+                gp_note.velocity = min(127, max(1, getattr(n, 'velocity', 95)))
                 beat.notes.append(gp_note)
-                voice.beats.append(beat)
+            else:
+                beat.status = guitarpro.BeatStatus.rest
+
+            voice.beats.append(beat)
 
         track.measures.append(measure)
 
