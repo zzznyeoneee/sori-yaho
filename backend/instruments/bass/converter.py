@@ -11,7 +11,11 @@ BASS_PITCH_MAX = 55
 # General MIDI 베이스 계열 프로그램 번호(0-indexed 32~39):
 # Acoustic/Fingered/Picked/Fretless/Slap/Synth Bass
 _BASS_GM_PROGRAMS = range(32, 40)
-_MT3_MODEL = "mr_mt3"
+# mt3-infer의 "mr_mt3" 모델은 vendored T5(HuggingFace transformers 의존)를
+# generate()에 쓰는데, transformers 버전(4.50 미만/5.x 이상 둘 다)에 따라
+# GenerationMixin/Cache API 불일치로 깨진다. "yourmt3"/"mt3_pytorch"는
+# transformers에 의존하지 않는 독립 구현이라 이 문제가 없어 기본값으로 사용.
+_MT3_MODEL = "yourmt3"
 _MT3_SAMPLE_RATE = 16000
 
 
