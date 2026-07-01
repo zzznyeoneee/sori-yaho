@@ -193,6 +193,17 @@ wsl --install
 sudo apt update && sudo apt install python3 python3-pip python3-venv -y
 ```
 
+### `CheckpointDownloadError: ... 'lfs' appears to be a git command, but we were not able to execute it`
+
+YourMT3(베이스 MT3 채보) 체크포인트는 Hugging Face 저장소를 `git clone` + `git lfs pull`로 받는데, `git-lfs`가 설치되어 있지 않으면 발생합니다:
+
+```bash
+sudo apt update && sudo apt install git-lfs -y
+git lfs install
+```
+
+설치 후 백엔드를 재시작하고 다시 시도하세요.
+
 ### `ImportError: libcudart.so` — CUDA 버전 불일치
 
 torchaudio가 CUDA 버전으로 설치됐지만 WSL에 맞는 CUDA가 없는 경우입니다. CPU 버전으로 재설치:
