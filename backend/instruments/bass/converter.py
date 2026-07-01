@@ -11,15 +11,19 @@ BASS_PITCH_MAX = 55
 # General MIDI 베이스 계열 프로그램 번호(0-indexed 32~39):
 # Acoustic/Fingered/Picked/Fretless/Slap/Synth Bass
 _BASS_GM_PROGRAMS = range(32, 40)
-# mt3-infer의 "mr_mt3" 모델은 vendored T5(HuggingFace transformers 의존)를
-# generate()에 쓰는데, transformers 버전(4.50 미만/5.x 이상 둘 다)에 따라
-# GenerationMixin/Cache API 불일치로 깨진다.
-# "yourmt3"는 huggingface.co/spaces/mimbres/YourMT3 저장소 전체(체크포인트
-# 5종 포함, 수 GB)를 git-lfs로 통째로 내려받아 첫 실행이 지나치게 오래 걸림.
-# "mt3_pytorch"는 transformers에 의존하지 않고, 전용 저장소에서 176MB만
-# 받으면 되며 mt3-infer 자체 설정(config/checkpoints.yaml)의 기본/추천
-# 모델이기도 해서 이걸 사용한다.
-_MT3_MODEL = "mt3_pytorch"
+# mt3-infer 0.1.3의 "mr_mt3"·"mt3_pytorch"는 둘 다 vendored T5 모델이
+# transformers.GenerationMixin을 명시적으로 상속하지 않아, 현재 배포된
+# 어떤 transformers 버전(4.49 / 4.57.5 / 5.x 모두 재현 시도)에서도
+# model.generate() 호출 시 깨진다 (mt3_pytorch는 그 전에 vendored
+# t5.py가 transformers.models.t5.modeling_t5에서 이미 제거된
+# `checkpoint` 심볼을 import하다가 ImportError로 먼저 죽는다).
+#
+# "yourmt3"는 HF generate()를 쓰지 않고 자체 autoregressive 디코딩
+# (task_cond_dec_generate)을 구현해 이 문제를 구조적으로 피해간다.
+# 체크포인트 저장소가 커서(git-lfs로 huggingface.co/spaces/mimbres/YourMT3
+# 전체 clone, 체크포인트 5종 포함 수 GB) 다운로드는 오래 걸리지만
+# 셋 중 실제로 동작할 가능성이 가장 높아 이걸 사용한다.
+_MT3_MODEL = "yourmt3"
 _MT3_SAMPLE_RATE = 16000
 
 
