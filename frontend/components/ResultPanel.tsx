@@ -3,10 +3,12 @@
 import { useRef, useState } from 'react'
 import MidiPlayer from './MidiPlayer'
 import SheetViewer, { SheetViewerHandle } from './SheetViewer'
+import TabViewer from './TabViewer'
 
 export interface TranscribeResult {
   midiUrl: string
   musicxmlUrl: string
+  tabUrl?: string
   instrument: string
   filename: string
 }
@@ -17,6 +19,11 @@ interface ResultPanelProps {
 
 export default function ResultPanel({ result }: ResultPanelProps) {
   const [currentMeasure, setCurrentMeasure] = useState(0)
+  const [view, setView] = useState<'sheet' | 'tab'>('sheet')
+
+  function handleMeasure(measure: number) {
+    setCurrentMeasure(measure + 1)
+  }
   const sheetRef = useRef<SheetViewerHandle>(null)
 
   return (
@@ -26,20 +33,47 @@ export default function ResultPanel({ result }: ResultPanelProps) {
       {/* 악보 미리보기 */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-white/40">악보 미리보기</p>
-          <p className="text-xs text-purple-400">마디 {currentMeasure + 1}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-white/40">악보 미리보기</p>
+            {result.tabUrl && (
+              <div className="flex rounded-lg overflow-hidden border border-white/10 text-xs">
+                <button
+                  onClick={() => setView('sheet')}
+                  className={`px-2 py-0.5 transition-colors ${view === 'sheet' ? 'bg-purple-600 text-white' : 'text-white/40 hover:text-white/70'}`}
+                >
+                  악보
+                </button>
+                <button
+                  onClick={() => setView('tab')}
+                  className={`px-2 py-0.5 transition-colors ${view === 'tab' ? 'bg-purple-600 text-white' : 'text-white/40 hover:text-white/70'}`}
+                >
+                  TAB
+                </button>
+              </div>
+            )}
+          </div>
+          {currentMeasure > 0 && view === 'sheet' && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-600/30 text-purple-300">
+              {currentMeasure} 마디
+            </span>
+          )}
         </div>
-        <SheetViewer ref={sheetRef} url={result.musicxmlUrl} currentMeasure={currentMeasure} />
+
+        {view === 'sheet' || !result.tabUrl ? (
+          <SheetViewer ref={sheetRef} url={result.musicxmlUrl} currentMeasure={currentMeasure - 1} />
+        ) : (
+          <TabViewer url={result.tabUrl} />
+        )}
       </div>
 
       {/* MIDI 미리듣기 */}
       <div className="flex flex-col gap-3">
         <p className="text-xs text-white/40">MIDI 미리듣기</p>
-        <MidiPlayer url={result.midiUrl} onMeasure={setCurrentMeasure} />
+        <MidiPlayer url={result.midiUrl} instrument={result.instrument} onMeasure={handleMeasure} />
       </div>
 
       {/* 다운로드 버튼 */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         <a
           href={result.midiUrl}
           download={`${result.filename}.mid`}
@@ -54,6 +88,15 @@ export default function ResultPanel({ result }: ResultPanelProps) {
         >
           MusicXML 다운로드
         </a>
+        {result.tabUrl && (
+          <a
+            href={result.tabUrl}
+            download={`${result.filename}_tab.gp5`}
+            className="flex-1 text-center py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 text-sm font-semibold transition-colors"
+          >
+            TAB 다운로드
+          </a>
+        )}
       </div>
     </div>
   )

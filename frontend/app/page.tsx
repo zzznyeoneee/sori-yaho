@@ -40,6 +40,7 @@ export default function Home() {
       setResult({
         midiUrl: `${API_BASE}${data.midi_url}`,
         musicxmlUrl: `${API_BASE}${data.musicxml_url}`,
+        tabUrl: data.tab_url ? `${API_BASE}${data.tab_url}` : undefined,
         instrument: data.instrument,
         filename: file.name.replace(/\.[^.]+$/, ''),
       })

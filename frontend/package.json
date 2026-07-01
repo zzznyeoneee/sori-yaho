@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@coderline/alphatab": "^1.8.3",
     "midi-player-js": "^2.0.17",
     "next": "14.2.35",
     "opensheetmusicdisplay": "^1.9.9",

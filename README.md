@@ -8,129 +8,224 @@
 |------|------|
 | 🎹 피아노 | ✅ 구현 완료 |
 | 🥁 드럼 | ✅ 구현 완료 |
+| 🎸 베이스 | ✅ 구현 완료 |
 | 🎸 기타 | 🔜 준비 중 |
 
 ---
 
-## 로컬 실행 방법
+## 사전 요구사항
 
-### 사전 요구사항
-
-- Python 3.12
-- Node.js 18+
-- Git
-- NVIDIA GPU + CUDA 12.x (선택사항, CPU도 동작)
+| 항목 | 버전 | 확인 방법 |
+|------|------|-----------|
+| Python | 3.11 이상 | `python3 --version` (WSL) |
+| Node.js | 18 이상 | `node --version` (PowerShell) |
+| Git | 최신 | `git --version` |
+| NVIDIA GPU | 선택사항 | `nvidia-smi` (WSL) |
 
 ---
+
+## 환경 구성 안내
+
+> **백엔드는 WSL(Ubuntu)에서, 프론트엔드는 Windows PowerShell에서 실행합니다.**
+>
+> WSL과 Windows의 `venv`는 서로 공유되지 않으므로 WSL 안에서 따로 설치해야 합니다.
+> **최초 1회만** 설치하면 이후 브랜치를 바꿔도 다시 설치할 필요 없습니다.
+
+---
+
+## 처음 설치 (최초 1회)
 
 ### 1. 저장소 클론
 
-```bash
+**Windows PowerShell:**
+```powershell
 git clone https://github.com/zzznyeoneee/sori-yaho.git
 cd sori-yaho
-git checkout claude/laughing-cray-MOupG
 ```
 
 ---
 
-### 2. 백엔드 실행
+### 2. 백엔드 환경 설정 (WSL)
+
+시작 메뉴에서 **Ubuntu** 실행 (또는 PowerShell에서 `wsl`):
 
 ```bash
-cd backend
+cd /mnt/c/Users/<내 사용자명>/sori-yaho/backend
 ```
 
-#### 패키지 설치 순서 (중요)
+> `<내 사용자명>` 은 본인 Windows 사용자 이름으로 바꾸세요. (예: `zzznxeoneee`)
+
+#### 가상환경 생성 및 활성화
 
 ```bash
-# 1. PyTorch — CUDA 버전 (GPU 사용 시)
+python3 -m venv venv
+source venv/bin/activate
+```
+
+> 활성화되면 터미널 앞에 `(venv)` 가 표시됩니다.
+
+#### 패키지 설치 (순서 중요)
+
+```bash
+# 1. PyTorch (CUDA 12.4 — GPU 사용 시)
 pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124
 
 # CPU만 사용할 경우
-pip install torch torchaudio
+# pip install torch torchaudio
 
 # 2. 나머지 패키지
 pip install -r requirements.txt
 
-# 3. 피아노 채보 모델 (별도 설치)
+# 3. 피아노 채보 모델
 pip install piano_transcription_inference
+
+# 4. 베이스 채보 모델
+pip install basic-pitch==0.4.0 onnxruntime
+pip install tf-keras==2.15.0
+pip install PyGuitarPro
 ```
 
-#### 설치 패키지 목록
+> CUDA 버전 설치 시 GPU 드라이버 버전 불일치 오류가 나면 CPU 버전으로 설치하세요.
 
-| 패키지 | 용도 |
-|--------|------|
-| `torch`, `torchaudio` | 딥러닝 프레임워크 (CUDA 지원) |
-| `fastapi`, `uvicorn`, `python-multipart` | 웹 서버 |
-| `pydantic-settings` | 환경 변수 관리 |
-| `demucs` | 트랙 분리 (GPU 가속) |
-| `librosa`, `pretty_midi` | 드럼 채보 |
-| `music21` | 악보(MusicXML) 생성 |
-| `piano_transcription_inference` | 피아노 채보 (GPU 가속) |
-
-#### 백엔드 시작
+#### 환경변수 파일 생성
 
 ```bash
-python -m uvicorn main:app --reload
-```
+cat > .env << 'EOF'
+UPLOAD_DIR=/tmp/sori-yaho/uploads
+OUTPUT_DIR=/tmp/sori-yaho/outputs
+EOF
 
-백엔드가 `http://localhost:8000` 에서 실행됩니다.
-
-> 첫 실행 시 Demucs, piano_transcription 모델 자동 다운로드로 시간이 걸릴 수 있습니다.
-
-- Swagger UI: `http://localhost:8000/docs`
-- 헬스체크: `http://localhost:8000/health`
-
-#### Windows 환경변수 (`backend/.env`)
-
-```
-UPLOAD_DIR=C:/tmp/sori-yaho/uploads
-OUTPUT_DIR=C:/tmp/sori-yaho/outputs
+mkdir -p /tmp/sori-yaho/uploads /tmp/sori-yaho/outputs
 ```
 
 ---
 
-### 3. 프론트엔드 실행
+### 3. 프론트엔드 환경 설정 (Windows PowerShell)
 
-새 터미널을 열고:
+새 PowerShell 창을 열고:
 
-```bash
-cd frontend
+```powershell
+cd C:\Users\<내 사용자명>\sori-yaho\frontend
 ```
 
-`frontend/.env.local` 파일 생성:
+#### 환경변수 파일 생성
+
+`frontend/.env.local` 파일을 만들고 아래 내용 입력:
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-```bash
+#### 패키지 설치
+
+```powershell
 npm install
-npm run dev
 ```
-
-프론트엔드가 `http://localhost:3000` 에서 실행됩니다.
-
-#### 프론트엔드 패키지 목록
-
-| 패키지 | 용도 |
-|--------|------|
-| `next`, `react`, `typescript` | 프레임워크 |
-| `tailwindcss` | 스타일 |
-| `opensheetmusicdisplay` | MusicXML 악보 렌더링 |
-| `midi-player-js` | MIDI 재생 |
-| `soundfont-player` | 가상악기 사운드 |
 
 ---
 
-### 4. 사용 방법
+## 실행 방법 (매번)
+
+**터미널 2개**를 열어서 각각 실행합니다.
+
+### 터미널 1 — 백엔드 (WSL)
+
+Ubuntu 실행 후:
+
+```bash
+cd /mnt/c/Users/<내 사용자명>/sori-yaho/backend
+source venv/bin/activate
+python3 -m uvicorn main:app --reload --host 0.0.0.0
+```
+
+→ `http://localhost:8000` 에서 실행됩니다.
+→ 첫 실행 시 Demucs, piano_transcription 모델 자동 다운로드로 수 분이 걸릴 수 있습니다.
+
+| 주소 | 설명 |
+|------|------|
+| `http://localhost:8000/health` | 서버 상태 확인 |
+| `http://localhost:8000/docs` | API 문서 (Swagger UI) |
+
+---
+
+### 터미널 2 — 프론트엔드 (Windows PowerShell)
+
+```powershell
+cd C:\Users\<내 사용자명>\sori-yaho\frontend
+npm run dev
+```
+
+→ `http://localhost:3000` 에서 실행됩니다.
+
+---
+
+## 사용 방법
 
 1. 브라우저에서 `http://localhost:3000` 접속
-2. 왼쪽 사이드바에서 악기 선택 (피아노 또는 드럼)
-3. MP3 또는 WAV 파일 드래그앤드롭 또는 클릭해서 업로드
+2. 왼쪽 사이드바에서 악기 선택 (피아노, 드럼, 베이스)
+3. MP3 또는 WAV 파일 드래그앤드롭 또는 클릭해서 업로드 (최대 50MB)
 4. 변환 완료 후:
    - 악보 미리보기 (MusicXML 렌더링)
-   - MIDI 재생 시 현재 마디 표시
-   - MIDI / MusicXML 다운로드
+   - 베이스는 악보/TAB 토글로 타브 악보 확인 가능
+   - MIDI 재생 시 현재 마디 하이라이트
+   - MIDI / MusicXML / TAB(.gp5) 다운로드
+
+---
+
+## 자주 발생하는 문제
+
+### WSL이 설치되지 않은 경우
+
+PowerShell **관리자 권한**으로 실행:
+
+```powershell
+wsl --install
+```
+
+설치 후 PC 재시작.
+
+### WSL에서 python3 명령어가 없는 경우
+
+```bash
+sudo apt update && sudo apt install python3 python3-pip python3-venv -y
+```
+
+### `ImportError: libcudart.so` — CUDA 버전 불일치
+
+torchaudio가 CUDA 버전으로 설치됐지만 WSL에 맞는 CUDA가 없는 경우입니다. CPU 버전으로 재설치:
+
+```bash
+pip uninstall torch torchaudio -y
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+```
+
+### basic-pitch 모델 로드 실패
+
+tf-keras 버전 충돌 문제입니다:
+
+```bash
+pip install tf-keras==2.15.0
+```
+
+### 백엔드 실행 시 `ModuleNotFoundError`
+
+가상환경이 활성화되지 않은 상태입니다. 터미널 앞에 `(venv)` 가 있는지 확인하고 없으면:
+
+```bash
+source venv/bin/activate
+```
+
+### 프론트엔드에서 `Failed to fetch`
+
+- 백엔드가 `--host 0.0.0.0` 옵션으로 실행 중인지 확인
+- `http://localhost:8000/health` 접속해서 `{"status":"ok"}` 나오는지 확인
+- `frontend/.env.local` 에 `NEXT_PUBLIC_API_URL=http://localhost:8000` 있는지 확인
+
+### 업로드 디렉토리 오류
+
+```bash
+mkdir -p /tmp/sori-yaho/uploads /tmp/sori-yaho/outputs
+```
 
 ---
 
@@ -140,19 +235,20 @@ npm run dev
 sori-yaho/
 ├── frontend/                  # Next.js 14 (TypeScript)
 │   ├── app/
-│   │   ├── page.tsx           # 메인 페이지 (2열 레이아웃)
+│   │   ├── page.tsx           # 메인 페이지
 │   │   └── layout.tsx
 │   └── components/
 │       ├── Sidebar.tsx        # 악기 선택
 │       ├── UploadZone.tsx     # 파일 업로드
 │       ├── ProgressCard.tsx   # 변환 진행 상태
-│       ├── ResultPanel.tsx    # 결과 통합 패널
-│       ├── SheetViewer.tsx    # MusicXML 악보 렌더링 + 마디 커서
-│       └── MidiPlayer.tsx     # MIDI 재생 + 마디 동기화
+│       ├── ResultPanel.tsx    # 결과 패널
+│       ├── SheetViewer.tsx    # MusicXML 악보 렌더링
+│       └── MidiPlayer.tsx     # MIDI 재생
 │
 └── backend/                   # FastAPI (Python)
     ├── main.py                # 앱 진입점
     ├── requirements.txt
+    ├── .env                   # 환경변수 (직접 생성)
     ├── core/
     │   └── config.py          # 환경 설정
     ├── schemas/
@@ -161,15 +257,16 @@ sori-yaho/
     │   └── transcribe.py      # POST /api/transcribe
     └── instruments/
         ├── drums/
-        │   ├── separator.py   # Demucs 트랙 분리 (GPU)
-        │   ├── transcriber.py # onset 감지 + kick/snare/hihat 분류
+        │   ├── separator.py   # Demucs 트랙 분리
+        │   ├── transcriber.py # onset 감지 + 드럼 분류
         │   └── notator.py     # MIDI → MusicXML
+        ├── bass/
+        │   ├── separator.py   # Demucs 베이스 트랙 분리
+        │   └── converter.py   # 오디오 → MIDI → MusicXML + GuitarPro 타브
         └── piano/
-            ├── converter.py   # 오디오 → MIDI → MusicXML (GPU)
+            ├── converter.py   # 오디오 → MIDI → MusicXML
             ├── analyzer.py    # MIDI 파싱 + 손 분리
-            ├── post_process.py
-            ├── basicpitch_adapter.py
-            └── musescore_polish.py
+            └── post_process.py
 ```
 
 ---
@@ -179,10 +276,13 @@ sori-yaho/
 | 영역 | 기술 |
 |------|------|
 | 프론트엔드 | Next.js 14, TypeScript, Tailwind CSS |
-| 백엔드 | FastAPI, Python 3.12 |
+| 백엔드 | FastAPI, Python 3.11+ |
 | 트랙 분리 | Demucs (GPU 가속) |
 | 드럼 채보 | librosa, pretty_midi |
 | 피아노 채보 | piano_transcription_inference (GPU 가속) |
+| 베이스 채보 | basic-pitch (Spotify) |
+| 타브 악보 생성 | PyGuitarPro |
+| 타브 악보 렌더링 | alphaTab |
 | 악보 생성 | music21 |
 | 악보 렌더링 | OpenSheetMusicDisplay |
 | MIDI 재생 | midi-player-js + soundfont-player |

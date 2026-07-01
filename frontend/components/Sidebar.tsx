@@ -10,6 +10,7 @@ interface Instrument {
 const instruments: Instrument[] = [
   { id: 'piano', label: '피아노', icon: '🎹', available: true },
   { id: 'drums', label: '드럼', icon: '🥁', available: true },
+  { id: 'bass', label: '베이스', icon: '🎸', available: true },
   { id: 'guitar', label: '기타', icon: '🎸', available: false },
 ]
 
