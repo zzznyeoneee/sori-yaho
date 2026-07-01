@@ -101,8 +101,11 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
     num_measures = max(1, max_slot // SLOTS_PER_MEASURE + 1)
 
     # GuitarPro Song 구성
+    # Song()/Track()이 기본으로 채워두는 measureHeader/measure 1개를 그대로 두면
+    # 헤더-마디 개수가 어긋나 alphaTab이 파싱하지 못하므로 비우고 새로 채운다.
     song = guitarpro.Song()
     song.tempo = int(bpm)
+    song.measureHeaders = []
 
     track = guitarpro.Track(song)
     track.name = "Bass"
@@ -114,17 +117,16 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
         guitarpro.GuitarString(4, 28),  # E1
     ]
     track.channel.instrument = 33  # Electric Bass
+    track.measures = []
 
     prev_fret = None
 
     for m in range(num_measures):
-        header = (song.measureHeaders[m] if m < len(song.measureHeaders)
-                  else guitarpro.MeasureHeader())
+        header = guitarpro.MeasureHeader()
         header.number = m + 1
         header.timeSignature.numerator = 4
         header.timeSignature.denominator = guitarpro.Duration(value=4)
-        if m >= len(song.measureHeaders):
-            song.measureHeaders.append(header)
+        song.measureHeaders.append(header)
 
         measure = guitarpro.Measure(track, header)
         voice = measure.voices[0]
@@ -141,10 +143,15 @@ def midi_to_tab(midi_path: str, output_dir: str) -> str:
                 string_num, fret = best_position(n.pitch, prev_fret)
                 prev_fret = fret
 
-                gp_note = guitarpro.Note(string_num)
+                # Note()의 첫 위치 인자는 string이 아니라 beat이므로
+                # string/type은 반드시 속성으로 직접 설정해야 한다.
+                gp_note = guitarpro.Note(beat)
+                gp_note.string = string_num
                 gp_note.value = fret
+                gp_note.type = guitarpro.NoteType.normal
                 gp_note.velocity = min(127, max(1, getattr(n, 'velocity', 95)))
                 beat.notes.append(gp_note)
+                beat.status = guitarpro.BeatStatus.normal
             else:
                 beat.status = guitarpro.BeatStatus.rest
 
