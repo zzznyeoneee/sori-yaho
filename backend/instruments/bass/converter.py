@@ -13,9 +13,13 @@ BASS_PITCH_MAX = 55
 _BASS_GM_PROGRAMS = range(32, 40)
 # mt3-infer의 "mr_mt3" 모델은 vendored T5(HuggingFace transformers 의존)를
 # generate()에 쓰는데, transformers 버전(4.50 미만/5.x 이상 둘 다)에 따라
-# GenerationMixin/Cache API 불일치로 깨진다. "yourmt3"/"mt3_pytorch"는
-# transformers에 의존하지 않는 독립 구현이라 이 문제가 없어 기본값으로 사용.
-_MT3_MODEL = "yourmt3"
+# GenerationMixin/Cache API 불일치로 깨진다.
+# "yourmt3"는 huggingface.co/spaces/mimbres/YourMT3 저장소 전체(체크포인트
+# 5종 포함, 수 GB)를 git-lfs로 통째로 내려받아 첫 실행이 지나치게 오래 걸림.
+# "mt3_pytorch"는 transformers에 의존하지 않고, 전용 저장소에서 176MB만
+# 받으면 되며 mt3-infer 자체 설정(config/checkpoints.yaml)의 기본/추천
+# 모델이기도 해서 이걸 사용한다.
+_MT3_MODEL = "mt3_pytorch"
 _MT3_SAMPLE_RATE = 16000
 
 
