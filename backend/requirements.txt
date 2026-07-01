@@ -19,6 +19,9 @@ music21>=9.1.0
 # 피아노 채보
 piano_transcription_inference
 
-# 베이스 채보
-basic-pitch
+# 베이스 채보 (MT3)
+mt3-infer[torch]
 PyGuitarPro
+
+# 보컬 채보
+basic-pitch

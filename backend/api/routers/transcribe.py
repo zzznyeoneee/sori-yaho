@@ -22,7 +22,7 @@ MAX_BYTES = settings.MAX_FILE_SIZE_MB * 1024 * 1024
 @router.post("/transcribe", response_model=TranscribeResponse)
 async def transcribe(
     file: UploadFile = File(...),
-    instrument: Literal["drums", "piano", "bass"] = Form("drums"),
+    instrument: Literal["drums", "piano", "bass", "vocal"] = Form("drums"),
 ):
     # 파일 확장자 검사
     suffix = Path(file.filename or "").suffix.lower()
@@ -51,6 +51,8 @@ async def transcribe(
             midi_path, xml_path = _run_piano(str(audio_path), str(output_dir))
         elif instrument == "bass":
             midi_path, xml_path, tab_path = _run_bass(str(audio_path), str(output_dir))
+        elif instrument == "vocal":
+            midi_path, xml_path = _run_vocal(str(audio_path), str(output_dir))
         else:
             raise HTTPException(status_code=400, detail=f"지원하지 않는 악기입니다: {instrument}")
     except Exception as e:
@@ -103,3 +105,13 @@ def _run_bass(audio_path: str, output_dir: str):
     xml_path = midi_to_musicxml(midi_path, output_dir)
     tab_path = midi_to_tab(midi_path, output_dir)
     return midi_path, xml_path, tab_path
+
+
+def _run_vocal(audio_path: str, output_dir: str):
+    from instruments.vocal.separator import separate_vocal
+    from instruments.vocal.converter import audio_to_midi, midi_to_musicxml
+
+    vocal_wav = separate_vocal(audio_path, output_dir)
+    midi_path = audio_to_midi(vocal_wav, output_dir)
+    xml_path = midi_to_musicxml(midi_path, output_dir)
+    return midi_path, xml_path

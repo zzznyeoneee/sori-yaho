@@ -43,6 +43,7 @@ export default function MidiPlayer({ url, instrument, onMeasure }: MidiPlayerPro
   const lastMeasureRef = useRef(-1)
   const isDrums = instrument === 'drums'
   const isBass = instrument === 'bass'
+  const isVocal = instrument === 'vocal'
 
   useEffect(() => {
     return () => {
@@ -80,7 +81,7 @@ export default function MidiPlayer({ url, instrument, onMeasure }: MidiPlayerPro
         )
         drumInstrumentsRef.current = Object.fromEntries(loaded)
       } else {
-        const soundfontName = isBass ? 'electric_bass_finger' : 'acoustic_grand_piano'
+        const soundfontName = isBass ? 'electric_bass_finger' : isVocal ? 'choir_aahs' : 'acoustic_grand_piano'
         instrumentRef.current = await soundfont.instrument(
           ctx, soundfontName, { soundfont: 'FluidR3_GM' }
         )

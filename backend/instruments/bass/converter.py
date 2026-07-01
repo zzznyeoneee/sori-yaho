@@ -8,38 +8,52 @@ logger = logging.getLogger(__name__)
 BASS_PITCH_MIN = 28
 BASS_PITCH_MAX = 55
 
+# General MIDI 베이스 계열 프로그램 번호(0-indexed 32~39):
+# Acoustic/Fingered/Picked/Fretless/Slap/Synth Bass
+_BASS_GM_PROGRAMS = range(32, 40)
+_MT3_MODEL = "mr_mt3"
+_MT3_SAMPLE_RATE = 16000
+
 
 def audio_to_midi(audio_path: str, output_dir: str) -> str:
-    """Basic Pitch로 베이스 WAV → MIDI 변환."""
-    from basic_pitch.inference import predict, Model
-    from basic_pitch import ICASSP_2022_MODEL_PATH
+    """MT3(mt3-infer)로 베이스 WAV → MIDI 변환."""
+    import librosa
     import pretty_midi
+    from mt3_infer import transcribe
 
     audio_path = Path(audio_path)
     output_dir = Path(output_dir)
 
-    logger.info("Basic Pitch 베이스 채보 시작: %s", audio_path)
+    logger.info("MT3 베이스 채보 시작: %s", audio_path)
 
-    model = Model(ICASSP_2022_MODEL_PATH)
+    y, _ = librosa.load(str(audio_path), sr=_MT3_SAMPLE_RATE, mono=True)
+    raw_midi = transcribe(y, sr=_MT3_SAMPLE_RATE, model=_MT3_MODEL)
 
-    model_output, midi_data, note_events = predict(
-        str(audio_path),
-        model,
-        onset_threshold=0.3,
-        frame_threshold=0.2,
-        minimum_note_length=30,
-        melodia_trick=False,
-    )
+    # 베이스 GM 프로그램 트랙을 우선 채택 (MT3는 다중 악기를 동시에 채보하므로
+    # 프로그램 번호로 베이스 트랙만 골라내야 한다). 매칭되는 트랙이 없으면
+    # 전체 트랙에서 베이스 음역대로 필터링해 대체한다.
+    bass_notes = [
+        note
+        for inst in raw_midi.instruments
+        if not inst.is_drum and inst.program in _BASS_GM_PROGRAMS
+        for note in inst.notes
+    ]
+    if not bass_notes:
+        logger.warning("MT3 결과에 베이스 GM 트랙이 없어 음역대 필터로 대체합니다.")
+        bass_notes = [
+            note
+            for inst in raw_midi.instruments
+            if not inst.is_drum
+            for note in inst.notes
+        ]
 
     # 베이스 음역대 밖 음표 제거
-    bass_midi = pretty_midi.PrettyMIDI(initial_tempo=midi_data.estimate_tempo())
+    bass_midi = pretty_midi.PrettyMIDI(initial_tempo=raw_midi.estimate_tempo())
     instrument = pretty_midi.Instrument(program=33, name="Bass")  # Electric Bass
-    for inst in midi_data.instruments:
-        for note in inst.notes:
-            if BASS_PITCH_MIN <= note.pitch <= BASS_PITCH_MAX:
-                instrument.notes.append(note)
-
-    instrument.notes.sort(key=lambda n: n.start)
+    instrument.notes = sorted(
+        (n for n in bass_notes if BASS_PITCH_MIN <= n.pitch <= BASS_PITCH_MAX),
+        key=lambda n: n.start,
+    )
     bass_midi.instruments.append(instrument)
 
     midi_path = output_dir / "bass.mid"

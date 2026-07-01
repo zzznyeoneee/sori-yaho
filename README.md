@@ -79,10 +79,13 @@ pip install -r requirements.txt
 # 3. 피아노 채보 모델
 pip install piano_transcription_inference
 
-# 4. 베이스 채보 모델
+# 4. 베이스 채보 모델 (MT3)
+pip install "mt3-infer[torch]"
+pip install PyGuitarPro
+
+# 5. 보컬 채보 모델
 pip install basic-pitch==0.4.0 onnxruntime
 pip install tf-keras==2.15.0
-pip install PyGuitarPro
 ```
 
 > CUDA 버전 설치 시 GPU 드라이버 버전 불일치 오류가 나면 CPU 버전으로 설치하세요.
@@ -162,7 +165,7 @@ npm run dev
 ## 사용 방법
 
 1. 브라우저에서 `http://localhost:3000` 접속
-2. 왼쪽 사이드바에서 악기 선택 (피아노, 드럼, 베이스)
+2. 왼쪽 사이드바에서 악기 선택 (피아노, 드럼, 보컬, 베이스)
 3. MP3 또는 WAV 파일 드래그앤드롭 또는 클릭해서 업로드 (최대 50MB)
 4. 변환 완료 후:
    - 악보 미리보기 (MusicXML 렌더링)
@@ -280,7 +283,8 @@ sori-yaho/
 | 트랙 분리 | Demucs (GPU 가속) |
 | 드럼 채보 | librosa, pretty_midi |
 | 피아노 채보 | piano_transcription_inference (GPU 가속) |
-| 베이스 채보 | basic-pitch (Spotify) |
+| 베이스 채보 | MT3 (mt3-infer, GPU 가속) |
+| 보컬 채보 | basic-pitch (Spotify) |
 | 타브 악보 생성 | PyGuitarPro |
 | 타브 악보 렌더링 | alphaTab |
 | 악보 생성 | music21 |
