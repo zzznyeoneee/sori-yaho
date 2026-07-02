@@ -27,10 +27,37 @@ _MT3_MODEL = "yourmt3"
 _MT3_SAMPLE_RATE = 16000
 
 
+def _patch_transformers_compat() -> None:
+    """mt3-infer 0.1.3의 vendored 모델 코드가 이미 제거된 옛 transformers
+    심볼을 import하다가 죽는 것을 우회한다. 둘 다 학습/멀티GPU 전용
+    기능이라 추론 경로에서는 실제로 호출되지 않는다.
+
+    - transformers.models.t5.modeling_t5.checkpoint: gradient checkpointing
+      함수가 클래스 기반(GradientCheckpointingLayer)으로 리팩토링되며 사라짐.
+    - transformers.utils.model_parallel_utils: 레거시 naive 모델 병렬화
+      유틸리티 모듈 자체가 삭제됨 (yourmt3의 t5mod.py가 import).
+    """
+    import sys
+    import types
+    import torch
+    import transformers.models.t5.modeling_t5 as t5_modeling
+
+    if not hasattr(t5_modeling, "checkpoint"):
+        t5_modeling.checkpoint = torch.utils.checkpoint.checkpoint
+
+    if "transformers.utils.model_parallel_utils" not in sys.modules:
+        stub = types.ModuleType("transformers.utils.model_parallel_utils")
+        stub.assert_device_map = lambda *a, **k: None
+        stub.get_device_map = lambda n_layers, devices: {d: [] for d in devices}
+        sys.modules["transformers.utils.model_parallel_utils"] = stub
+
+
 def audio_to_midi(audio_path: str, output_dir: str) -> str:
     """MT3(mt3-infer)로 베이스 WAV → MIDI 변환."""
     import librosa
     import pretty_midi
+
+    _patch_transformers_compat()
     from mt3_infer import transcribe
 
     audio_path = Path(audio_path)
