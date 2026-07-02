@@ -21,6 +21,7 @@ piano_transcription_inference
 
 # 베이스 채보 (MT3)
 mt3-infer[torch]
+pytorch-lightning  # mt3-infer의 yourmt3 어댑터가 필요로 하지만 자체 의존성에 누락되어 있음
 PyGuitarPro
 
 # 보컬 채보
