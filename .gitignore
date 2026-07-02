@@ -14,3 +14,8 @@ backend/uploads/
 backend/outputs/
 backend/C*/
 *.deb
+
+# MT3(mt3-infer) 체크포인트 캐시 (수백MB~1GB, 실수로 커밋되기 쉬움)
+backend/.mt3_checkpoints/
+*.pth
+*.ckpt
