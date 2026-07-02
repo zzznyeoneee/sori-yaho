@@ -36,11 +36,16 @@ def _patch_transformers_compat() -> None:
       함수가 클래스 기반(GradientCheckpointingLayer)으로 리팩토링되며 사라짐.
     - transformers.utils.model_parallel_utils: 레거시 naive 모델 병렬화
       유틸리티 모듈 자체가 삭제됨 (yourmt3의 t5mod.py가 import).
+    - transformers.pytorch_utils.find_pruneable_heads_and_indices: 레거시
+      어텐션 헤드 프루닝 유틸리티가 삭제됨 (perceiver_mod.py가 import).
+      추론 시 실제 프루닝을 수행하지 않으므로 원본 구현을 그대로 복원해도
+      무해하다.
     """
     import sys
     import types
     import torch
     import transformers.models.t5.modeling_t5 as t5_modeling
+    import transformers.pytorch_utils as pytorch_utils
 
     if not hasattr(t5_modeling, "checkpoint"):
         t5_modeling.checkpoint = torch.utils.checkpoint.checkpoint
@@ -50,6 +55,18 @@ def _patch_transformers_compat() -> None:
         stub.assert_device_map = lambda *a, **k: None
         stub.get_device_map = lambda n_layers, devices: {d: [] for d in devices}
         sys.modules["transformers.utils.model_parallel_utils"] = stub
+
+    if not hasattr(pytorch_utils, "find_pruneable_heads_and_indices"):
+        def find_pruneable_heads_and_indices(heads, n_heads, head_size, already_pruned_heads):
+            mask = torch.ones(n_heads, head_size)
+            heads = set(heads) - already_pruned_heads
+            for head in heads:
+                head = head - sum(1 if h < head else 0 for h in already_pruned_heads)
+                mask[head] = 0
+            mask = mask.view(-1).eq(1)
+            index = torch.arange(len(mask))[mask].long()
+            return heads, index
+        pytorch_utils.find_pruneable_heads_and_indices = find_pruneable_heads_and_indices
 
 
 def audio_to_midi(audio_path: str, output_dir: str) -> str:
