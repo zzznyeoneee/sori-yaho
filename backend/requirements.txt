@@ -22,6 +22,11 @@ piano_transcription_inference
 # 베이스 채보 (MT3)
 mt3-infer[torch]
 pytorch-lightning  # mt3-infer의 yourmt3 어댑터가 필요로 하지만 자체 의존성에 누락되어 있음
+# mt3-infer(vendored T5/Perceiver 코드)가 transformers>=4.35.0으로만 선언돼 있어
+# pip가 최신(5.x)을 설치하는데, T5 레이어 반환 튜플 구조가 리팩토링되며 깨진다.
+# 4.36~4.44대는 옛 튜플 계약(hidden_states, present_key_value, position_bias)을
+# 유지하는 마지막 구간이라 4.44.2로 고정한다.
+transformers==4.44.2
 PyGuitarPro
 
 # 보컬 채보
