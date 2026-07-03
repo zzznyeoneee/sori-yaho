@@ -40,12 +40,18 @@ def _patch_transformers_compat() -> None:
       어텐션 헤드 프루닝 유틸리티가 삭제됨 (perceiver_mod.py가 import).
       추론 시 실제 프루닝을 수행하지 않으므로 원본 구현을 그대로 복원해도
       무해하다.
+    - PreTrainedModel.get_head_mask/_convert_head_mask_to_5d: T5/Perceiver
+      인코더가 head_mask=None을 표준 형식([None]*num_layers)으로 바꾸는 데
+      쓰는 ModuleUtilsMixin 메서드가 삭제됨. head_mask를 실제로 넘기지
+      않는(None) 추론 경로에서도 이 변환 자체가 필수라 no-op 스텁이 아니라
+      원본 구현을 그대로 복원해야 한다.
     """
     import sys
     import types
     import torch
     import transformers.models.t5.modeling_t5 as t5_modeling
     import transformers.pytorch_utils as pytorch_utils
+    from transformers.modeling_utils import PreTrainedModel
 
     if not hasattr(t5_modeling, "checkpoint"):
         t5_modeling.checkpoint = torch.utils.checkpoint.checkpoint
@@ -67,6 +73,28 @@ def _patch_transformers_compat() -> None:
             index = torch.arange(len(mask))[mask].long()
             return heads, index
         pytorch_utils.find_pruneable_heads_and_indices = find_pruneable_heads_and_indices
+
+    if not hasattr(PreTrainedModel, "get_head_mask"):
+        def _convert_head_mask_to_5d(self, head_mask, num_hidden_layers):
+            if head_mask.dim() == 1:
+                head_mask = head_mask.unsqueeze(0).unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
+                head_mask = head_mask.expand(num_hidden_layers, -1, -1, -1, -1)
+            elif head_mask.dim() == 2:
+                head_mask = head_mask.unsqueeze(1).unsqueeze(-1).unsqueeze(-1)
+            head_mask = head_mask.to(dtype=self.dtype)
+            return head_mask
+
+        def get_head_mask(self, head_mask, num_hidden_layers, is_attention_chunked=False):
+            if head_mask is not None:
+                head_mask = self._convert_head_mask_to_5d(head_mask, num_hidden_layers)
+                if is_attention_chunked is True:
+                    head_mask = head_mask.unsqueeze(-1)
+            else:
+                head_mask = [None] * num_hidden_layers
+            return head_mask
+
+        PreTrainedModel._convert_head_mask_to_5d = _convert_head_mask_to_5d
+        PreTrainedModel.get_head_mask = get_head_mask
 
 
 def audio_to_midi(audio_path: str, output_dir: str) -> str:
