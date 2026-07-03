@@ -111,7 +111,13 @@ def audio_to_midi(audio_path: str, output_dir: str) -> str:
     logger.info("MT3 베이스 채보 시작: %s", audio_path)
 
     y, _ = librosa.load(str(audio_path), sr=_MT3_SAMPLE_RATE, mono=True)
-    raw_midi = transcribe(y, sr=_MT3_SAMPLE_RATE, model=_MT3_MODEL)
+    raw_midi_mido = transcribe(y, sr=_MT3_SAMPLE_RATE, model=_MT3_MODEL)
+
+    # mt3-infer는 mido.MidiFile을 반환한다 (pretty_midi 객체가 아님).
+    # note/instrument 단위로 다루기 위해 임시 저장 후 pretty_midi로 재로드한다.
+    mt3_raw_path = output_dir / "mt3_raw.mid"
+    raw_midi_mido.save(str(mt3_raw_path))
+    raw_midi = pretty_midi.PrettyMIDI(str(mt3_raw_path))
 
     # 베이스 GM 프로그램 트랙을 우선 채택 (MT3는 다중 악기를 동시에 채보하므로
     # 프로그램 번호로 베이스 트랙만 골라내야 한다). 매칭되는 트랙이 없으면
