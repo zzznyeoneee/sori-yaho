@@ -61,7 +61,12 @@ def midi_to_drum_score(midi_path: str, output_dir: str) -> str:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     pm = pretty_midi.PrettyMIDI(midi_path)
-    bpm = pm.estimate_tempo()
+    try:
+        bpm = pm.estimate_tempo()
+    except ValueError:
+        # estimate_tempo()는 노트가 2개 미만이면 예외를 던진다 (감지된 드럼
+        # 히트가 거의 없는 경우). 기본 템포로 대체.
+        bpm = 120.0
 
     # 박자 정보
     beat_ql = 1.0          # 4/4 기준 quarter = 1 ql
