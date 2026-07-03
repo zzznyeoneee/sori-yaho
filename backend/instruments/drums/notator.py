@@ -97,6 +97,13 @@ def midi_to_drum_score(midi_path: str, output_dir: str) -> str:
     logger.info("drum pitches: %s", sorted(pitch_counts.items()))
 
     if not all_notes:
+        # 마디가 0개인 채로 내보내면 OSMD가 렌더링 중 죽으므로
+        # 쉼표로만 채운 마디 하나를 넣어 최소 1마디를 보장한다.
+        m = stream.Measure(number=1)
+        r = note.Rest()
+        r.duration.quarterLength = measure_ql
+        m.append(r)
+        part.append(m)
         score.append(part)
         out_path = output_dir / f"{Path(midi_path).stem}.xml"
         score.write("musicxml", fp=str(out_path))
